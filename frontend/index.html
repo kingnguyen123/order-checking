@@ -1,0 +1,945 @@
+<title>Order Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --paper: #eef0ec;
+    --surface: #ffffff;
+    --surface-2: #f5f4ef;
+    --ink: #1b2430;
+    --ink-muted: #5c6672;
+    --border: #d8d9d0;
+    --accent: #2c3e6b;
+    --accent-contrast: #ffffff;
+    --accent-soft: #e4e8f3;
+    --stamp-success: #1f7a4d;
+    --stamp-success-bg: #e3f3e9;
+    --stamp-cancel: #b23b2e;
+    --stamp-cancel-bg: #f7e6e3;
+    --stamp-new: #a97417;
+    --stamp-new-bg: #f5ecd8;
+    --stamp-both: #6b4fa0;
+    --stamp-both-bg: #ece6f5;
+    --stamp-good: #8a6d0f;
+    --stamp-good-bg: #f4ecd3;
+    --font-display: 'Zilla Slab', Georgia, 'Times New Roman', serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Consolas', 'SFMono-Regular', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #11161d;
+      --surface: #171e28;
+      --surface-2: #1d2530;
+      --ink: #e7e6e1;
+      --ink-muted: #96a0ab;
+      --border: #2b3542;
+      --accent: #91a5e0;
+      --accent-contrast: #11161d;
+      --accent-soft: #232c42;
+      --stamp-success: #52c98a;
+      --stamp-success-bg: #163826;
+      --stamp-cancel: #f1806a;
+      --stamp-cancel-bg: #3c2019;
+      --stamp-new: #e0ab52;
+      --stamp-new-bg: #3a2e12;
+      --stamp-both: #b39ee0;
+      --stamp-both-bg: #2c2440;
+      --stamp-good: #d9bd52;
+      --stamp-good-bg: #362e10;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #11161d;
+    --surface: #171e28;
+    --surface-2: #1d2530;
+    --ink: #e7e6e1;
+    --ink-muted: #96a0ab;
+    --border: #2b3542;
+    --accent: #91a5e0;
+    --accent-contrast: #11161d;
+    --accent-soft: #232c42;
+    --stamp-success: #52c98a;
+    --stamp-success-bg: #163826;
+    --stamp-cancel: #f1806a;
+    --stamp-cancel-bg: #3c2019;
+    --stamp-new: #e0ab52;
+    --stamp-new-bg: #3a2e12;
+    --stamp-both: #b39ee0;
+    --stamp-both-bg: #2c2440;
+    --stamp-good: #d9bd52;
+    --stamp-good-bg: #362e10;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    padding-inline: 20px;
+    padding-block: 28px;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  .app-shell { max-width: 1360px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+
+  /* Visible, themed scrollbars for the scrolling boxes below (file list, ledger table) */
+  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .scroll-box::-webkit-scrollbar { width: 11px; height: 11px; }
+  .scroll-box::-webkit-scrollbar-track { background: transparent; }
+  .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
+  .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
+
+  .topbar { padding-block: 2px 4px; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand-mark {
+    font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    border: 2px solid var(--accent); color: var(--accent); border-radius: 4px;
+    width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transform: rotate(-3deg); letter-spacing: 0.02em;
+  }
+  .brand-title { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin: 0 0 2px; text-wrap: balance; }
+  .brand-tag { margin: 0; color: var(--ink-muted); font-size: 13.5px; max-width: 62ch; }
+
+  .workspace { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .workspace { grid-template-columns: 1fr; } .intake { position: static !important; } }
+
+  .panel-title {
+    font-family: var(--font-display); font-weight: 600; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin: 0 0 6px;
+  }
+  .panel-hint { font-size: 12.5px; color: var(--ink-muted); margin: 0 0 14px; line-height: 1.5; }
+
+  .intake {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 18px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 20px;
+  }
+
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 8px; padding: 26px 14px;
+    text-align: center; cursor: pointer; color: var(--ink-muted);
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+  }
+  .dropzone svg { color: var(--ink-muted); transition: color .15s ease; }
+  .dropzone:hover, .dropzone-active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+  .dropzone:hover svg, .dropzone-active svg { color: var(--accent); }
+  .dropzone-title { margin: 8px 0 2px; font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+  .dropzone-sub { margin: 0; font-size: 12px; }
+
+  .warning-list { background: var(--stamp-cancel-bg); border: 1px solid var(--stamp-cancel); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+  .warning-item { font-size: 12px; color: var(--stamp-cancel); margin: 0; }
+
+  .file-list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+  .file-row { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+  .file-row-main { display: flex; align-items: center; gap: 8px; }
+  .file-name { flex: 1; font-family: var(--font-mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-count { font-size: 11px; color: var(--ink-muted); white-space: nowrap; }
+  .file-warning { font-size: 11px; color: var(--stamp-cancel); margin-top: 2px; }
+  .icon-btn { background: none; border: none; color: var(--ink-muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 4px; }
+  .icon-btn:hover { color: var(--stamp-cancel); background: var(--surface); }
+
+  .intake-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .intake-buttons { display: flex; gap: 8px; }
+
+  .muted { color: var(--ink-muted); }
+  .small { font-size: 12px; }
+
+  .btn {
+    font-family: var(--font-body); font-size: 13px; font-weight: 600; padding: 8px 14px;
+    border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn-ghost { background: transparent; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .analysis { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 4px; }
+  @media (max-width: 1000px) { .stat-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 700px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
+  .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; }
+  .stat-value { font-family: var(--font-display); font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .stat-success .stat-value { color: var(--stamp-success); }
+  .stat-cancel .stat-value { color: var(--stamp-cancel); }
+  .stat-both .stat-value { color: var(--stamp-both); }
+  .stat-good .stat-value { color: var(--stamp-good); }
+
+  .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin: 14px 0; }
+  .search-input {
+    flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 13.5px;
+  }
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .select {
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 12.5px; cursor: pointer;
+  }
+  .chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-muted); font-size: 12.5px; cursor: pointer; font-family: var(--font-body); }
+  .chip-active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .chip-good.chip-active { background: var(--stamp-good); border-color: var(--stamp-good); color: var(--stamp-good-bg); }
+  .toolbar-export { display: flex; align-items: center; gap: 10px; }
+  .export-status { font-size: 12px; color: var(--ink-muted); }
+
+  .table-wrap {
+    overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+    max-height: 68vh;
+  }
+  .ledger-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 920px; }
+  .ledger-table thead th {
+    position: sticky; top: 0; z-index: 1;
+    text-align: left; padding: 10px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+    font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); white-space: nowrap;
+  }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--ink); }
+  .data-row { cursor: pointer; border-bottom: 1px solid var(--border); }
+  .data-row:hover { background: var(--surface-2); }
+  .data-row td { padding: 10px 12px; vertical-align: top; }
+  .cell-email { font-family: var(--font-mono); font-size: 12.5px; }
+  .cell-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .cell-date { font-family: var(--font-mono); color: var(--ink-muted); white-space: nowrap; font-size: 12px; }
+  .expand-cell { width: 20px; text-align: center; }
+  .chevron { display: inline-block; transition: transform .15s ease; color: var(--ink-muted); }
+  .chevron-open { transform: rotate(90deg); }
+  .detail-row td { background: var(--surface-2); padding: 10px 16px 16px 40px; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .detail-table th { text-align: left; padding: 4px 10px; color: var(--ink-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
+  .detail-table td { padding: 4px 10px; font-family: var(--font-mono); }
+
+  .stamp {
+    display: inline-block; padding: 3px 9px; border: 1.5px solid currentColor; border-radius: 3px;
+    font-family: var(--font-display); font-weight: 600; font-size: 10.5px; letter-spacing: 0.05em;
+    text-transform: uppercase; transform: rotate(-1.5deg); white-space: nowrap;
+  }
+  .stamp-success { color: var(--stamp-success); background: var(--stamp-success-bg); }
+  .stamp-cancel { color: var(--stamp-cancel); background: var(--stamp-cancel-bg); }
+  .stamp-both { color: var(--stamp-both); background: var(--stamp-both-bg); }
+  .stamp-neutral { color: var(--ink-muted); background: var(--surface-2); border-color: var(--border); transform: none; }
+  .stamp-good { color: var(--stamp-good); background: var(--stamp-good-bg); }
+
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .pill-success { background: var(--stamp-success-bg); color: var(--stamp-success); }
+  .pill-cancel { background: var(--stamp-cancel-bg); color: var(--stamp-cancel); }
+  .pill-neutral { background: var(--surface); color: var(--ink-muted); }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 600; }
+  .tag-new { background: var(--stamp-new-bg); color: var(--stamp-new); }
+  .tag-old { background: var(--surface); color: var(--ink-muted); }
+  .tag-unknown { color: var(--ink-muted); }
+
+  .product-badges { display: flex; flex-wrap: wrap; gap: 4px; max-width: 280px; }
+  .product-badge { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--ink); white-space: nowrap; }
+
+  .empty-state { padding: 40px 20px; text-align: center; color: var(--ink-muted); border: 1px dashed var(--border); border-radius: 8px; background: var(--surface); }
+  .footer-note { text-align: center; font-size: 12px; color: var(--ink-muted); padding-block: 6px 2px; }
+</style>
+
+<div id="root"></div>
+<noscript>This page needs JavaScript enabled to parse and analyze CSV files.</noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var useState = React.useState, useMemo = React.useMemo, useRef = React.useRef;
+  var h = React.createElement;
+
+  var SUCCESS_STATUSES = new Set(["ordered", "success", "completed", "shipped", "delivered"]);
+  var CANCEL_STATUSES = new Set(["cancelled", "canceled", "cancel"]);
+
+  // ---------- CSV parsing ----------
+
+  function parseCSV(text) {
+    var rows = [];
+    var row = [];
+    var field = "";
+    var inQuotes = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else { inQuotes = false; }
+        } else {
+          field += c;
+        }
+      } else if (c === '"') {
+        inQuotes = true;
+      } else if (c === ",") {
+        row.push(field); field = "";
+      } else if (c === "\r") {
+        // skip
+      } else if (c === "\n") {
+        row.push(field); rows.push(row); row = []; field = "";
+      } else {
+        field += c;
+      }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function rowsToObjects(rows) {
+    if (!rows.length) return { headers: [], records: [] };
+    var headers = rows[0];
+    var records = [];
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.length === 1 && r[0] === "") continue;
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) obj[headers[j]] = r[j] !== undefined ? r[j] : "";
+      records.push(obj);
+    }
+    return { headers: headers, records: records };
+  }
+
+  function findCol(headers, candidates) {
+    var norm = {};
+    headers.forEach(function (hd) { norm[hd.trim().toLowerCase()] = hd; });
+    for (var i = 0; i < candidates.length; i++) if (norm[candidates[i]]) return norm[candidates[i]];
+    return null;
+  }
+
+  function dateKeyFn(str) {
+    if (!str) return null;
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str;
+    var t = Date.parse(str);
+    if (!isNaN(t)) return new Date(t).toISOString();
+    return str;
+  }
+
+  function csvEscape(v) {
+    var s = v === null || v === undefined ? "" : String(v);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  var uidCounter = 0;
+  function uid(prefix) { uidCounter += 1; return prefix + "-" + uidCounter + "-" + Date.now().toString(36); }
+
+  // ---------- aggregation (mirrors analyze_orders.py) ----------
+
+  var GOOD_STREAK_LENGTH = 3; // "more than two consecutive" successes
+  var GOOD_CLUSTER_DAYS = 30; // "multiple success orders within one month"
+
+  function dateFromKey(key) {
+    if (!key || !/^\d{4}-\d{2}-\d{2}/.test(key)) return null;
+    var d = new Date(key.slice(0, 10) + "T00:00:00Z");
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // A "good" account has either a streak of GOOD_STREAK_LENGTH+ consecutive
+  // successful orders, or two-or-more successful orders that landed within
+  // GOOD_CLUSTER_DAYS of each other. Only dated orders can take part.
+  function computeGoodAccount(orders) {
+    var dated = orders.filter(function (o) { return o.dateKey; }).slice()
+      .sort(function (a, b) { return a.dateKey < b.dateKey ? -1 : a.dateKey > b.dateKey ? 1 : 0; });
+
+    var streak = 0, bestStreak = 0;
+    dated.forEach(function (o) {
+      if (SUCCESS_STATUSES.has(o.status)) { streak++; bestStreak = Math.max(bestStreak, streak); }
+      else { streak = 0; }
+    });
+    var hasStreak = bestStreak >= GOOD_STREAK_LENGTH;
+
+    var successDates = dated
+      .filter(function (o) { return SUCCESS_STATUSES.has(o.status); })
+      .map(function (o) { return dateFromKey(o.dateKey); })
+      .filter(function (d) { return d; })
+      .sort(function (a, b) { return a - b; });
+    var hasCluster = false;
+    for (var i = 0; i < successDates.length - 1; i++) {
+      var diffDays = (successDates[i + 1] - successDates[i]) / (1000 * 60 * 60 * 24);
+      if (diffDays <= GOOD_CLUSTER_DAYS) { hasCluster = true; break; }
+    }
+
+    var reasons = [];
+    if (hasStreak) reasons.push(bestStreak + " consecutive successful orders");
+    if (hasCluster) reasons.push("multiple successful orders within " + GOOD_CLUSTER_DAYS + " days");
+    return { good: hasStreak || hasCluster, reasons: reasons };
+  }
+
+  function aggregateRows(rows) {
+    var firstDateByEmail = {};
+    rows.forEach(function (r) {
+      if (r.dateKey == null) return;
+      if (!(r.email in firstDateByEmail) || r.dateKey < firstDateByEmail[r.email]) firstDateByEmail[r.email] = r.dateKey;
+    });
+    var withAge = rows.map(function (r) {
+      var age = r.dateKey == null ? "unknown" : (r.dateKey === firstDateByEmail[r.email] ? "new" : "old");
+      return Object.assign({}, r, { accountAge: age });
+    });
+    var byEmail = new Map();
+    withAge.forEach(function (r) {
+      if (!byEmail.has(r.email)) {
+        byEmail.set(r.email, {
+          email: r.email, orders: [], successCount: 0, cancelCount: 0,
+          successProducts: new Map(), cancelProducts: new Map(), retailers: new Map(),
+          firstDate: firstDateByEmail[r.email] || null,
+        });
+      }
+      var rec = byEmail.get(r.email);
+      rec.orders.push(r);
+      if (r.retailer) rec.retailers.set(r.retailer, true);
+      if (SUCCESS_STATUSES.has(r.status)) {
+        rec.successCount++;
+        if (r.product) rec.successProducts.set(r.product, true);
+      } else if (CANCEL_STATUSES.has(r.status)) {
+        rec.cancelCount++;
+        if (r.product) rec.cancelProducts.set(r.product, true);
+      }
+    });
+    return Array.from(byEmail.values()).map(function (rec) {
+      var category = "none";
+      if (rec.successCount > 0 && rec.cancelCount > 0) category = "both";
+      else if (rec.successCount > 0) category = "success";
+      else if (rec.cancelCount > 0) category = "cancelled";
+      var good = computeGoodAccount(rec.orders);
+      return Object.assign({}, rec, {
+        category: category,
+        successProductList: Array.from(rec.successProducts.keys()),
+        cancelProductList: Array.from(rec.cancelProducts.keys()),
+        retailerList: Array.from(rec.retailers.keys()),
+        goodAccount: good.good,
+        goodReasons: good.reasons,
+      });
+    });
+  }
+
+  // ---------- small components ----------
+
+  function UploadIcon() {
+    return h("svg", { viewBox: "0 0 24 24", width: 26, height: 26, "aria-hidden": "true" },
+      h("path", {
+        d: "M12 3v10m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3",
+        stroke: "currentColor", strokeWidth: "1.6", fill: "none", strokeLinecap: "round", strokeLinejoin: "round",
+      })
+    );
+  }
+
+  function StatTile(props) {
+    return h("div", { className: "stat-tile" + (props.tone ? " stat-" + props.tone : "") },
+      h("div", { className: "stat-value" }, props.value),
+      h("div", { className: "stat-label" }, props.label)
+    );
+  }
+
+  var CATEGORY_META = {
+    success: { label: "Success only", cls: "stamp-success" },
+    cancelled: { label: "Cancelled only", cls: "stamp-cancel" },
+    both: { label: "Both", cls: "stamp-both" },
+    none: { label: "No status", cls: "stamp-neutral" },
+  };
+  function CategoryBadge(props) {
+    var meta = CATEGORY_META[props.category] || CATEGORY_META.none;
+    return h("span", { className: "stamp " + meta.cls }, meta.label);
+  }
+
+  function AgeTag(props) {
+    if (props.age === "new") return h("span", { className: "tag tag-new" }, "New");
+    if (props.age === "old") return h("span", { className: "tag tag-old" }, "Repeat");
+    return h("span", { className: "tag tag-unknown" }, "—");
+  }
+
+  function GoodBadge(props) {
+    if (!props.good) return h("span", { className: "muted" }, "—");
+    return h("span", { className: "stamp stamp-good", title: props.reasons.join("; ") }, "★ Good");
+  }
+
+  function StatusPill(props) {
+    var s = (props.status || "").toLowerCase();
+    var cls = "pill-neutral";
+    if (SUCCESS_STATUSES.has(s)) cls = "pill-success";
+    else if (CANCEL_STATUSES.has(s)) cls = "pill-cancel";
+    return h("span", { className: "pill " + cls }, props.status || "—");
+  }
+
+  function ProductList(props) {
+    if (!props.items.length) return h("span", { className: "muted" }, "—");
+    return h("div", { className: "product-badges" },
+      props.items.map(function (p) { return h("span", { className: "product-badge", key: p }, p); })
+    );
+  }
+
+  function IntakePanel(props) {
+    return h("aside", { className: "intake" },
+      h("h2", { className: "panel-title" }, "Intake"),
+      h("p", { className: "panel-hint" }, "Drop one or more order-export CSVs. Needs Status and Source Email columns; Date, Product, and Retailer are used when present."),
+      h("div", {
+        className: "dropzone" + (props.isDragging ? " dropzone-active" : ""),
+        onDragOver: props.onDragOver, onDragLeave: props.onDragLeave, onDrop: props.onDrop,
+        onClick: props.onBrowseClick, role: "button", tabIndex: 0,
+        onKeyDown: function (e) { if (e.key === "Enter" || e.key === " ") props.onBrowseClick(); },
+      },
+        h(UploadIcon, null),
+        h("p", { className: "dropzone-title" }, "Drag CSV files here"),
+        h("p", { className: "dropzone-sub" }, "or click to browse"),
+        h("input", {
+          ref: props.fileInputRef, type: "file", accept: ".csv,text/csv", multiple: true,
+          style: { display: "none" }, onChange: props.onFileInputChange, id: "csv-file-input",
+        })
+      ),
+      props.warnings.length > 0 ? h("div", { className: "warning-list" },
+        props.warnings.map(function (w, i) { return h("p", { className: "warning-item", key: i }, w); })
+      ) : null,
+      h("div", { className: "file-list scroll-box" },
+        props.fileEntries.length === 0
+          ? h("p", { className: "muted small" }, "No files loaded.")
+          : props.fileEntries.map(function (f) {
+              return h("div", { className: "file-row", key: f.id },
+                h("div", { className: "file-row-main" },
+                  h("span", { className: "file-name" }, f.name),
+                  h("span", { className: "file-count" }, f.count + " row" + (f.count === 1 ? "" : "s")),
+                  h("button", { className: "icon-btn", onClick: function () { props.onRemoveFile(f.id); }, "aria-label": "Remove " + f.name }, "×")
+                ),
+                f.warning ? h("div", { className: "file-warning" }, f.warning) : null
+              );
+            })
+      ),
+      h("div", { className: "intake-actions" },
+        h("span", { className: "muted small" },
+          props.totalRows === 0 ? "No rows loaded" : props.totalRows + " row" + (props.totalRows === 1 ? "" : "s") + " loaded"
+        ),
+        h("div", { className: "intake-buttons" },
+          h("button", { className: "btn btn-ghost", onClick: props.onClearAll }, "Clear all")
+        )
+      )
+    );
+  }
+
+  var CATEGORY_FILTERS = [
+    { key: "all", label: "All" },
+    { key: "success", label: "Success only" },
+    { key: "cancelled", label: "Cancelled only" },
+    { key: "both", label: "Both" },
+  ];
+
+  function Toolbar(props) {
+    return h("div", { className: "toolbar" },
+      h("input", {
+        className: "search-input", type: "search", placeholder: "Search email or product…",
+        value: props.search, onChange: function (e) { props.onSearchChange(e.target.value); }, "aria-label": "Search accounts",
+      }),
+      h("div", { className: "filter-chips", role: "group", "aria-label": "Filter by category" },
+        CATEGORY_FILTERS.map(function (f) {
+          return h("button", {
+            key: f.key, className: "chip" + (props.category === f.key ? " chip-active" : ""),
+            onClick: function () { props.onCategoryChange(f.key); },
+          }, f.label);
+        }),
+        h("button", {
+          className: "chip chip-good" + (props.goodOnly ? " chip-active" : ""),
+          onClick: function () { props.onGoodOnlyChange(!props.goodOnly); },
+          title: "3+ consecutive successful orders, or multiple successful orders within a month",
+        }, "★ Good only")
+      ),
+      h("select", {
+        className: "select", value: props.retailerFilter, "aria-label": "Filter by retailer",
+        onChange: function (e) { props.onRetailerChange(e.target.value); },
+      },
+        h("option", { value: "all" }, "All retailers"),
+        props.retailers.map(function (r) { return h("option", { key: r, value: r }, r); })
+      ),
+      h("div", { className: "toolbar-export" },
+        (props.exportStatus || props.copyStatus) ? h("span", { className: "export-status" }, props.exportStatus || props.copyStatus) : null,
+        h("button", {
+          className: "btn btn-ghost", onClick: props.onCopyEmails, disabled: props.exportDisabled, title: "Copy every listed email address",
+        }, "Copy Emails"),
+        h("button", { className: "btn btn-primary", onClick: props.onExport, disabled: props.exportDisabled }, "Export CSV")
+      )
+    );
+  }
+
+  var COLUMNS = [
+    { key: "email", label: "Source Email" },
+    { key: "successCount", label: "Success" },
+    { key: "cancelCount", label: "Cancelled" },
+    { key: "category", label: "Category" },
+    { key: "goodAccount", label: "Good" },
+    { key: "firstDate", label: "First Order" },
+  ];
+
+  function ResultsTable(props) {
+    var records = props.records;
+    if (!records.length) {
+      return h("div", { className: "empty-state" }, "No accounts match. Adjust your search or filter, or drop CSV files on the left.");
+    }
+    var bodyRows = records.map(function (r) {
+      var isOpen = props.expanded === r.email;
+      var out = [
+        h("tr", {
+          key: r.email, className: "data-row" + (isOpen ? " data-row-open" : ""),
+          onClick: function () { props.onToggleExpand(r.email); },
+        },
+          h("td", { className: "cell-email" }, r.email),
+          h("td", { className: "cell-num" }, r.successCount),
+          h("td", { className: "cell-num" }, r.cancelCount),
+          h("td", null, h(CategoryBadge, { category: r.category })),
+          h("td", null, h(GoodBadge, { good: r.goodAccount, reasons: r.goodReasons })),
+          h("td", { className: "cell-date" }, r.firstDate ? r.firstDate.slice(0, 10) : "—"),
+          h("td", null, h(ProductList, { items: r.retailerList })),
+          h("td", null, h(ProductList, { items: r.successProductList.concat(r.cancelProductList.filter(function (p) { return r.successProductList.indexOf(p) === -1; })) })),
+          h("td", { className: "expand-cell" }, h("span", { className: "chevron" + (isOpen ? " chevron-open" : "") }, "▸"))
+        ),
+      ];
+      if (isOpen) {
+        var sortedOrders = r.orders.slice().sort(function (a, b) {
+          return (a.dateKey || "").localeCompare(b.dateKey || "");
+        });
+        out.push(h("tr", { className: "detail-row", key: r.email + "-detail" },
+          h("td", { colSpan: 9 },
+            h("table", { className: "detail-table" },
+              h("thead", null, h("tr", null,
+                h("th", null, "Date"), h("th", null, "Status"), h("th", null, "Retailer"), h("th", null, "Product"), h("th", null, "Account")
+              )),
+              h("tbody", null,
+                sortedOrders.map(function (o, i) {
+                  return h("tr", { key: i },
+                    h("td", { className: "cell-date" }, o.dateRaw || "—"),
+                    h("td", null, h(StatusPill, { status: o.statusRaw || o.status })),
+                    h("td", null, o.retailer || "—"),
+                    h("td", null, o.product || "—"),
+                    h("td", null, h(AgeTag, { age: o.accountAge }))
+                  );
+                })
+              )
+            )
+          )
+        ));
+      }
+      return out;
+    }).reduce(function (a, b) { return a.concat(b); }, []);
+
+    return h("div", { className: "table-wrap scroll-box" },
+      h("table", { className: "ledger-table" },
+        h("thead", null,
+          h("tr", null,
+            COLUMNS.map(function (c) {
+              return h("th", {
+                key: c.key, onClick: function () { props.onSort(c.key); },
+                className: "sortable" + (props.sortKey === c.key ? " sorted" : ""),
+              }, c.label, props.sortKey === c.key ? (props.sortDir === "asc" ? " ▴" : " ▾") : "");
+            }).concat([
+              h("th", { key: "retailers" }, "Retailer"),
+              h("th", { key: "products" }, "Products"),
+              h("th", { key: "expand" }),
+            ])
+          )
+        ),
+        h("tbody", null, bodyRows)
+      )
+    );
+  }
+
+  function App() {
+    var s1 = useState([]); var fileEntries = s1[0], setFileEntries = s1[1];
+    var s2 = useState([]); var rawRows = s2[0], setRawRows = s2[1];
+    var s4 = useState(false); var isDragging = s4[0], setIsDragging = s4[1];
+    var s5 = useState(""); var search = s5[0], setSearch = s5[1];
+    var s6 = useState("all"); var category = s6[0], setCategory = s6[1];
+    var s7 = useState("successCount"); var sortKey = s7[0], setSortKey = s7[1];
+    var s8 = useState("desc"); var sortDir = s8[0], setSortDir = s8[1];
+    var s9 = useState(null); var expanded = s9[0], setExpanded = s9[1];
+    var s10 = useState(""); var exportStatus = s10[0], setExportStatus = s10[1];
+    var s11 = useState("all"); var retailerFilter = s11[0], setRetailerFilter = s11[1];
+    var s12 = useState(false); var goodOnly = s12[0], setGoodOnly = s12[1];
+    var s13 = useState(""); var copyStatus = s13[0], setCopyStatus = s13[1];
+    var fileInputRef = useRef(null);
+
+    var retailers = useMemo(function () {
+      var seen = new Map();
+      rawRows.forEach(function (r) { if (r.retailer) seen.set(r.retailer, true); });
+      return Array.from(seen.keys()).sort();
+    }, [rawRows]);
+
+    var scopedRows = useMemo(function () {
+      return retailerFilter === "all" ? rawRows : rawRows.filter(function (r) { return r.retailer === retailerFilter; });
+    }, [rawRows, retailerFilter]);
+
+    var records = useMemo(function () { return aggregateRows(scopedRows); }, [scopedRows]);
+
+    var totals = useMemo(function () {
+      var success = 0, cancelled = 0, both = 0, good = 0;
+      records.forEach(function (r) {
+        if (r.category === "success") success++;
+        else if (r.category === "cancelled") cancelled++;
+        else if (r.category === "both") both++;
+        if (r.goodAccount) good++;
+      });
+      return { accounts: records.length, success: success, cancelled: cancelled, both: both, good: good, orders: scopedRows.length };
+    }, [records, scopedRows]);
+
+    var filteredSorted = useMemo(function () {
+      var list = records;
+      if (category !== "all") list = list.filter(function (r) { return r.category === category; });
+      if (goodOnly) list = list.filter(function (r) { return r.goodAccount; });
+      var q = search.trim().toLowerCase();
+      if (q) {
+        list = list.filter(function (r) {
+          return r.email.toLowerCase().indexOf(q) !== -1 ||
+            r.successProductList.some(function (p) { return p.toLowerCase().indexOf(q) !== -1; }) ||
+            r.cancelProductList.some(function (p) { return p.toLowerCase().indexOf(q) !== -1; });
+        });
+      }
+      var dir = sortDir === "asc" ? 1 : -1;
+      return list.slice().sort(function (a, b) {
+        var av = a[sortKey], bv = b[sortKey];
+        if (typeof av === "string") av = av.toLowerCase();
+        if (typeof bv === "string") bv = bv.toLowerCase();
+        if (av == null) av = "";
+        if (bv == null) bv = "";
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return a.email.localeCompare(b.email);
+      });
+    }, [records, category, goodOnly, search, sortKey, sortDir]);
+
+    // Parses read-but-unprocessed files entirely in the browser. Used when
+    // no Python backend is reachable (opened as a plain file, or hosted
+    // as a standalone Artifact) - and as the fallback if the backend call
+    // to /api/analyze fails for any reason.
+    function parseFilesLocally(loaded) {
+      var newEntries = [];
+      var newRows = [];
+      loaded.forEach(function (item) {
+        var fileId = uid("file");
+        var parsed = parseCSV(item.text);
+        var res = rowsToObjects(parsed);
+        if (!res.headers.length) { newEntries.push({ id: fileId, name: item.name, count: 0, warning: "Empty file" }); return; }
+        var statusCol = findCol(res.headers, ["status"]);
+        var emailCol = findCol(res.headers, ["source email"]);
+        var dateCol = findCol(res.headers, ["date"]);
+        var productCol = findCol(res.headers, ["product"]);
+        var retailerCol = findCol(res.headers, ["retailer"]);
+        if (!statusCol || !emailCol) {
+          newEntries.push({ id: fileId, name: item.name, count: 0, warning: "Missing Status and/or Source Email column" });
+          return;
+        }
+        var count = 0;
+        res.records.forEach(function (row) {
+          var email = (row[emailCol] || "").trim();
+          if (!email) return;
+          count++;
+          var statusRaw = (row[statusCol] || "").trim();
+          var dateRaw = dateCol ? (row[dateCol] || "").trim() : "";
+          newRows.push({
+            fileId: fileId, file: item.name, email: email,
+            status: statusRaw.toLowerCase(), statusRaw: statusRaw,
+            dateRaw: dateRaw, dateKey: dateRaw ? dateKeyFn(dateRaw) : null,
+            product: productCol ? (row[productCol] || "").trim() : "",
+            retailer: retailerCol ? (row[retailerCol] || "").trim() : "",
+          });
+        });
+        newEntries.push({ id: fileId, name: item.name, count: count });
+      });
+      return { newEntries: newEntries, newRows: newRows };
+    }
+
+    // Converts one file's rows as returned by the /api/analyze backend
+    // into the same row shape parseFilesLocally() produces.
+    function rowsFromBackendFile(fileId, item) {
+      return item.rows.map(function (r) {
+        return {
+          fileId: fileId, file: item.name, email: r.email,
+          status: (r.status || "").toLowerCase(), statusRaw: r.statusRaw || r.status || "",
+          dateRaw: r.dateRaw || "", dateKey: r.dateRaw ? dateKeyFn(r.dateRaw) : null,
+          product: r.product || "", retailer: r.retailer || "",
+        };
+      });
+    }
+
+    function processFileList(fileList) {
+      var files = Array.from(fileList).filter(function (f) { return /\.csv$/i.test(f.name); });
+      if (!files.length) return;
+      Promise.all(files.map(function (f) {
+        return new Promise(function (resolve) {
+          var reader = new FileReader();
+          reader.onload = function () { resolve({ name: f.name, text: String(reader.result || "") }); };
+          reader.onerror = function () { resolve({ name: f.name, text: "", error: true }); };
+          reader.readAsText(f);
+        });
+      })).then(function (loaded) {
+        var readable = loaded.filter(function (item) { return !item.error; });
+        var errorEntries = loaded.filter(function (item) { return item.error; })
+          .map(function (item) { return { id: uid("file"), name: item.name, count: 0, warning: "Could not read file" }; });
+
+        if (!readable.length) {
+          setFileEntries(function (prev) { return prev.concat(errorEntries); });
+          return;
+        }
+
+        // Prefer the Python backend (python app.py) - it shares the exact
+        // parsing rules with analyze_orders.py. Falls back to parsing
+        // in-browser when there is no backend to reach (fetch rejects or
+        // 404s, e.g. when this page is opened as a plain file or hosted
+        // as a standalone Artifact).
+        fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ files: readable.map(function (r) { return { name: r.name, text: r.text }; }) }),
+        }).then(function (resp) {
+          if (!resp.ok) throw new Error("backend unavailable");
+          return resp.json();
+        }).then(function (data) {
+          var newEntries = [];
+          var newRows = [];
+          (data.files || []).forEach(function (item) {
+            var fileId = uid("file");
+            newEntries.push({ id: fileId, name: item.name, count: item.count, warning: item.warning || null });
+            if (!item.warning) newRows = newRows.concat(rowsFromBackendFile(fileId, item));
+          });
+          setFileEntries(function (prev) { return prev.concat(errorEntries, newEntries); });
+          setRawRows(function (prev) { return prev.concat(newRows); });
+        }).catch(function () {
+          var local = parseFilesLocally(readable);
+          setFileEntries(function (prev) { return prev.concat(errorEntries, local.newEntries); });
+          setRawRows(function (prev) { return prev.concat(local.newRows); });
+        });
+      });
+    }
+
+    function onDrop(e) { e.preventDefault(); setIsDragging(false); if (e.dataTransfer && e.dataTransfer.files) processFileList(e.dataTransfer.files); }
+    function onDragOver(e) { e.preventDefault(); setIsDragging(true); }
+    function onDragLeave(e) { e.preventDefault(); setIsDragging(false); }
+    function onBrowseClick() { if (fileInputRef.current) fileInputRef.current.click(); }
+    function onFileInputChange(e) { processFileList(e.target.files); e.target.value = ""; }
+    function onRemoveFile(id) {
+      setFileEntries(function (prev) { return prev.filter(function (f) { return f.id !== id; }); });
+      setRawRows(function (prev) { return prev.filter(function (r) { return r.fileId !== id; }); });
+    }
+    function onClearAll() { setFileEntries([]); setRawRows([]); setExpanded(null); setRetailerFilter("all"); setGoodOnly(false); }
+    function onSort(key) {
+      if (sortKey === key) { setSortDir(sortDir === "asc" ? "desc" : "asc"); }
+      else { setSortKey(key); setSortDir(key === "email" || key === "category" || key === "firstDate" ? "asc" : "desc"); }
+    }
+    function onToggleExpand(email) { setExpanded(function (prev) { return prev === email ? null : email; }); }
+
+    function handleExport() {
+      if (!filteredSorted.length) return;
+      var header = ["Source Email", "Success Count", "Cancelled Count", "Category", "Good Account", "Good Account Reason", "First Order Date", "Retailers", "Success Products", "Cancelled Products"];
+      var lines = [header.map(csvEscape).join(",")];
+      filteredSorted.forEach(function (r) {
+        lines.push([
+          r.email, r.successCount, r.cancelCount, r.category,
+          r.goodAccount ? "Yes" : "No", r.goodReasons.join("; "),
+          r.firstDate ? r.firstDate.slice(0, 10) : "",
+          r.retailerList.join("; "),
+          r.successProductList.join("; "), r.cancelProductList.join("; "),
+        ].map(csvEscape).join(","));
+      });
+      var csvText = lines.join("\r\n");
+      setExportStatus("Preparing…");
+
+      function fallbackDownload() {
+        try {
+          var blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url; a.download = "order-ledger-summary.csv";
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          setExportStatus("Downloaded.");
+        } catch (err2) {
+          setExportStatus("Export unavailable here.");
+        }
+        setTimeout(function () { setExportStatus(""); }, 2500);
+      }
+
+      if (typeof window !== "undefined" && window.claude && window.claude.use) {
+        window.claude.use("downloads").then(function (downloads) {
+          if (!downloads) { fallbackDownload(); return; }
+          downloads.save({ filename: "order-ledger-summary.csv", data: csvText }).then(function (result) {
+            setExportStatus(result && result.status === "delivered" ? "Delivered." : "Saved.");
+            setTimeout(function () { setExportStatus(""); }, 2500);
+          }).catch(function (err) {
+            if (err && err.code === "declined") { setExportStatus(""); return; }
+            if (err && err.code === "rate_limited") { setExportStatus("Try again in a moment."); setTimeout(function () { setExportStatus(""); }, 2500); return; }
+            fallbackDownload();
+          });
+        }).catch(fallbackDownload);
+      } else {
+        fallbackDownload();
+      }
+    }
+
+    function handleCopyEmails() {
+      if (!filteredSorted.length) return;
+      var text = filteredSorted.map(function (r) { return r.email; }).join("\n");
+
+      function legacyCopy() {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+
+      function showResult(ok) {
+        setCopyStatus(ok ? "Copied " + filteredSorted.length + " email" + (filteredSorted.length === 1 ? "" : "s") + "." : "Couldn't copy.");
+        setTimeout(function () { setCopyStatus(""); }, 2500);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { showResult(true); }, function () { showResult(legacyCopy()); });
+      } else {
+        showResult(legacyCopy());
+      }
+    }
+
+    var warnings = fileEntries.filter(function (f) { return f.warning; }).map(function (f) { return f.name + ": " + f.warning; });
+
+    return h("div", { className: "app-shell" },
+      h("header", { className: "topbar" },
+        h("div", { className: "brand" },
+          h("span", { className: "brand-mark" }, "OL"),
+          h("div", null,
+            h("h1", { className: "brand-title" }, "Order Ledger"),
+            h("p", { className: "brand-tag" }, "Drop order-export CSVs to see who ordered, who got cancelled, and who's a repeat account.")
+          )
+        )
+      ),
+      h("main", { className: "workspace" },
+        h(IntakePanel, {
+          fileEntries: fileEntries, isDragging: isDragging, onDragOver: onDragOver, onDragLeave: onDragLeave, onDrop: onDrop,
+          onBrowseClick: onBrowseClick, fileInputRef: fileInputRef, onFileInputChange: onFileInputChange, onRemoveFile: onRemoveFile,
+          onClearAll: onClearAll, totalRows: rawRows.length, warnings: warnings,
+        }),
+        h("section", { className: "analysis" },
+          h("h2", { className: "panel-title" }, "Analysis"),
+          h("div", { className: "stat-row" },
+            h(StatTile, { label: "Accounts", value: totals.accounts }),
+            h(StatTile, { label: "Success only", value: totals.success, tone: "success" }),
+            h(StatTile, { label: "Cancelled only", value: totals.cancelled, tone: "cancel" }),
+            h(StatTile, { label: "Both", value: totals.both, tone: "both" }),
+            h(StatTile, { label: "Good accounts", value: totals.good, tone: "good" }),
+            h(StatTile, { label: "Order rows", value: totals.orders })
+          ),
+          h(Toolbar, {
+            search: search, onSearchChange: setSearch, category: category, onCategoryChange: setCategory,
+            retailers: retailers, retailerFilter: retailerFilter, onRetailerChange: setRetailerFilter,
+            goodOnly: goodOnly, onGoodOnlyChange: setGoodOnly,
+            onExport: handleExport, exportDisabled: !filteredSorted.length, exportStatus: exportStatus,
+            onCopyEmails: handleCopyEmails, copyStatus: copyStatus,
+          }),
+          h(ResultsTable, { records: filteredSorted, sortKey: sortKey, sortDir: sortDir, onSort: onSort, expanded: expanded, onToggleExpand: onToggleExpand })
+        )
+      ),
+      h("footer", { className: "footer-note" }, "Files are analyzed on your machine — by the local Python backend when running app.py, or right in your browser otherwise.")
+    );
+  }
+
+  var rootEl = document.getElementById("root");
+  ReactDOM.createRoot(rootEl).render(h(App));
+})();
+</script>
