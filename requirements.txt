@@ -1,0 +1,5 @@
+# Only needed for the optional Discord Order Analysis feature.
+# The original CSV analysis (app.py, analyze_orders.py, order_analysis.py)
+# uses only the Python standard library and works without these installed.
+discord.py>=2.3.0
+python-dotenv>=1.0.0

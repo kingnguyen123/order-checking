@@ -7,10 +7,11 @@ Scan a folder of order-export CSVs and:
      is the earliest order on record for that Source Email, Old if the
      account already had an earlier-dated order before this one.
 
-Usage:
-    python analyze_orders.py [csv_folder]
+Usage (from the project root):
+    python backend/analyze_orders.py [csv_folder]
 
-Defaults: csv_folder="csv"
+Defaults: csv_folder="csv" (resolved from the current working directory,
+so run this from the project root unless you pass an explicit path)
 
 Uses the Date, Status, Source Email, and Product columns; other columns
 (Order #, Retailer, etc.) are ignored. Files may have different column

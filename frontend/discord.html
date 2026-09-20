@@ -1,0 +1,1053 @@
+<title>Jigging Analysis</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --paper: #eef0ec;
+    --surface: #ffffff;
+    --surface-2: #f5f4ef;
+    --ink: #1b2430;
+    --ink-muted: #5c6672;
+    --border: #d8d9d0;
+    --accent: #2c3e6b;
+    --accent-contrast: #ffffff;
+    --accent-soft: #e4e8f3;
+    --stamp-success: #1f7a4d;
+    --stamp-success-bg: #e3f3e9;
+    --stamp-cancel: #b23b2e;
+    --stamp-cancel-bg: #f7e6e3;
+    --stamp-new: #a97417;
+    --stamp-new-bg: #f5ecd8;
+    --stamp-both: #6b4fa0;
+    --stamp-both-bg: #ece6f5;
+    --stamp-good: #8a6d0f;
+    --stamp-good-bg: #f4ecd3;
+    --font-display: 'Zilla Slab', Georgia, 'Times New Roman', serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Consolas', 'SFMono-Regular', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #11161d;
+      --surface: #171e28;
+      --surface-2: #1d2530;
+      --ink: #e7e6e1;
+      --ink-muted: #96a0ab;
+      --border: #2b3542;
+      --accent: #91a5e0;
+      --accent-contrast: #11161d;
+      --accent-soft: #232c42;
+      --stamp-success: #52c98a;
+      --stamp-success-bg: #163826;
+      --stamp-cancel: #f1806a;
+      --stamp-cancel-bg: #3c2019;
+      --stamp-new: #e0ab52;
+      --stamp-new-bg: #3a2e12;
+      --stamp-both: #b39ee0;
+      --stamp-both-bg: #2c2440;
+      --stamp-good: #d9bd52;
+      --stamp-good-bg: #362e10;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #11161d;
+    --surface: #171e28;
+    --surface-2: #1d2530;
+    --ink: #e7e6e1;
+    --ink-muted: #96a0ab;
+    --border: #2b3542;
+    --accent: #91a5e0;
+    --accent-contrast: #11161d;
+    --accent-soft: #232c42;
+    --stamp-success: #52c98a;
+    --stamp-success-bg: #163826;
+    --stamp-cancel: #f1806a;
+    --stamp-cancel-bg: #3c2019;
+    --stamp-new: #e0ab52;
+    --stamp-new-bg: #3a2e12;
+    --stamp-both: #b39ee0;
+    --stamp-both-bg: #2c2440;
+    --stamp-good: #d9bd52;
+    --stamp-good-bg: #362e10;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    padding-inline: 20px;
+    padding-block: 28px;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  .app-shell { max-width: 1100px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+
+  .page-nav { display: flex; gap: 8px; }
+  .page-nav-link {
+    font-family: var(--font-body); font-weight: 600; font-size: 13px;
+    padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--ink-muted); text-decoration: none;
+  }
+  .page-nav-link:hover { border-color: var(--accent); color: var(--ink); }
+  .page-nav-active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+
+  .topbar { padding-block: 2px 4px; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand-mark {
+    font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    border: 2px solid var(--accent); color: var(--accent); border-radius: 4px;
+    width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transform: rotate(-3deg); letter-spacing: 0.02em;
+  }
+  .brand-title { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin: 0 0 2px; text-wrap: balance; }
+  .brand-tag { margin: 0; color: var(--ink-muted); font-size: 13.5px; max-width: 62ch; }
+
+  .panel-title {
+    font-family: var(--font-display); font-weight: 600; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin: 0 0 6px;
+  }
+  .panel-hint { font-size: 12.5px; color: var(--ink-muted); margin: 0 0 14px; line-height: 1.5; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 18px; display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .status-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot-on { background: var(--stamp-success); }
+  .status-dot-off { background: var(--stamp-cancel); }
+  .status-text { font-weight: 600; }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 5px 8px 5px 12px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+  }
+  .status-pill .status-dot { width: 8px; height: 8px; }
+  .status-pill .status-text { font-size: 12px; font-weight: 600; }
+  .icon-btn {
+    width: 22px; height: 22px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--ink-muted);
+    cursor: pointer; padding: 0; font-size: 13px; line-height: 1;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--ink); }
+  .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .icon-btn-spin { animation: icon-spin 0.7s linear infinite; }
+  @keyframes icon-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .muted { color: var(--ink-muted); }
+  .small { font-size: 12px; }
+
+  .btn {
+    font-family: var(--font-body); font-size: 13px; font-weight: 600; padding: 8px 14px;
+    border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ghost { background: transparent; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+
+  .empty-state { padding: 34px 20px; text-align: center; color: var(--ink-muted); border: 1px dashed var(--border); border-radius: 8px; background: var(--surface); }
+
+  .selector-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+  .selector-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .save-status { font-size: 12px; color: var(--ink-muted); }
+
+  .guild-block { display: flex; flex-direction: column; gap: 14px; }
+  .guild-name { font-family: var(--font-display); font-weight: 600; font-size: 15px; margin: 0; }
+
+  .category-group { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .category-header {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+    font-family: var(--font-display); font-weight: 600; font-size: 13.5px;
+  }
+  .channel-list { display: flex; flex-direction: column; }
+  .channel-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 30px;
+    font-family: var(--font-mono); font-size: 13px; border-bottom: 1px solid var(--border);
+  }
+  .channel-row:last-child { border-bottom: none; }
+  .channel-row:hover { background: var(--surface-2); }
+  .channel-hash { color: var(--ink-muted); }
+
+  input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+  .footer-note { text-align: center; font-size: 12px; color: var(--ink-muted); padding-block: 6px 2px; }
+
+  .scan-progress { display: flex; flex-direction: column; gap: 6px; }
+  .scan-channel-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2);
+    font-size: 12.5px;
+  }
+  .scan-channel-name { font-family: var(--font-mono); }
+  .scan-channel-stats { color: var(--ink-muted); white-space: nowrap; }
+  .scan-summary {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 4px;
+  }
+  @media (max-width: 600px) { .scan-summary { grid-template-columns: repeat(2, 1fr); } }
+  .scan-stat { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+  .scan-stat-value { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+  .scan-stat-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); }
+
+  .search-textarea {
+    width: 100%; min-height: 70px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 13px; resize: vertical;
+  }
+  .status-group { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .status-group-header { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
+  .status-group-header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .status-group-header-actions { display: flex; align-items: center; gap: 8px; }
+  .profile-chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .profile-chip {
+    font-family: var(--font-mono); font-size: 12px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--ink);
+  }
+  .btn.small { padding: 4px 10px; font-size: 11.5px; }
+
+  .result-filter-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .result-filter { position: relative; width: 220px; max-width: 100%; }
+  .result-filter .dropdown-panel { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10; width: max-content; min-width: 100%; max-width: 320px; }
+
+  .filter-option {
+    display: flex; align-items: center; gap: 8px; padding: 6px 4px; font-size: 12.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-option:last-child { border-bottom: none; }
+  .filter-option:hover { background: var(--surface); }
+
+  .status-color-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-color-dot.status-color-green { background: var(--stamp-success); }
+  .status-color-dot.status-color-red { background: var(--stamp-cancel); }
+  .status-color-dot.status-color-orange { background: var(--stamp-new); }
+  .status-color-dot.status-color-yellow { background: var(--stamp-good); }
+  .status-color-dot.status-color-neutral { background: var(--ink-muted); }
+
+  .jig-category-name { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--ink); margin: 4px 0 2px; }
+  .jig-row { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; background: var(--surface-2); display: flex; flex-direction: column; gap: 6px; }
+  .jig-name { font-family: var(--font-mono); font-weight: 700; font-size: 14.5px; }
+  .jig-stat-line .jig-name { color: var(--ink); }
+  .jig-stats { display: flex; flex-direction: column; gap: 4px; }
+  .jig-stat-line {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 5px 8px; border-radius: 4px; font-size: 13px; background: var(--surface);
+  }
+  .jig-stat-count { font-family: var(--font-mono); font-weight: 700; }
+  .jig-stat-green { color: var(--stamp-success); }
+  .jig-stat-red { color: var(--stamp-cancel); }
+  .jig-stat-orange { color: var(--stamp-new); }
+  .jig-stat-yellow { color: var(--stamp-good); }
+  .jig-stat-neutral { color: var(--ink-muted); }
+
+  .status-group-green { border-left: 3px solid var(--stamp-success); }
+  .status-group-green .status-group-header { color: var(--stamp-success); }
+  .status-group-red { border-left: 3px solid var(--stamp-cancel); }
+  .status-group-red .status-group-header { color: var(--stamp-cancel); }
+  .status-group-orange { border-left: 3px solid var(--stamp-new); }
+  .status-group-orange .status-group-header { color: var(--stamp-new); }
+  .status-group-yellow { border-left: 3px solid var(--stamp-good); }
+  .status-group-yellow .status-group-header { color: var(--stamp-good); }
+  .status-group-neutral { border-left: 3px solid var(--ink-muted); }
+  .status-group-neutral .status-group-header { color: var(--ink-muted); }
+
+  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .scroll-box::-webkit-scrollbar { width: 11px; height: 11px; }
+  .scroll-box::-webkit-scrollbar-track { background: transparent; }
+  .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
+  .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
+
+  .dropdown-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+  .chevron { display: inline-block; transition: transform .15s ease; }
+  .chevron-open { transform: rotate(180deg); }
+  .dropdown-panel {
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+    max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+    background: var(--surface-2);
+  }
+
+  .workspace { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .workspace { grid-template-columns: 1fr; } .sidebar { position: static !important; } }
+
+  .sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; min-width: 0; }
+  .sidebar-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .sidebar-title {
+    font-family: var(--font-display); font-weight: 600; font-size: 12.5px;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin: 0;
+  }
+  .btn-block { width: 100%; }
+
+  .search-row { display: flex; gap: 6px; }
+  .search-input-inline {
+    flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 13px;
+  }
+
+  .date-range-panel {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    background: var(--surface); display: flex; flex-direction: column; gap: 8px;
+  }
+  .date-range-header { display: flex; align-items: center; justify-content: space-between; }
+  .date-range-title { font-family: var(--font-display); font-weight: 600; font-size: 12.5px; }
+  .date-nav { padding: 3px 9px; font-size: 13px; line-height: 1; }
+  .date-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+  .date-cell-label { text-align: center; font-size: 9.5px; color: var(--ink-muted); text-transform: uppercase; padding: 2px 0; }
+  .date-cell {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 11.5px; font-family: var(--font-mono); border: none; background: transparent;
+    border-radius: 999px; cursor: pointer; color: var(--ink); padding: 0;
+  }
+  .date-cell-empty { cursor: default; }
+  .date-cell-day:hover { background: var(--accent-soft); }
+  .date-cell-inrange { background: var(--accent-soft); border-radius: 0; }
+  .date-cell-selected { background: var(--accent); color: var(--accent-contrast); }
+  .date-cell-today { box-shadow: inset 0 0 0 1px var(--accent); }
+  .date-range-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+
+  .main-results { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  .toast-wrap {
+    position: fixed; bottom: 20px; right: 20px; width: 300px; max-width: calc(100vw - 40px);
+    z-index: 50; animation: toast-in .18s ease; padding: 14px; gap: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+  .toast-wrap.toast-leaving { animation: toast-out .25s ease forwards; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toast-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
+  .toast-wrap .panel-title { font-size: 11px; margin: 0; }
+  .toast-wrap .scan-channel-row { padding: 6px 10px; font-size: 11.5px; flex-wrap: wrap; }
+  .toast-wrap .scan-channel-stats { white-space: normal; }
+  .toast-wrap .scan-summary { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .toast-wrap .scan-stat { padding: 6px 8px; min-width: 0; }
+  .toast-wrap .scan-stat-value { font-size: 15px; }
+  .toast-wrap .scan-stat-label { font-size: 9px; }
+</style>
+
+<div id="root"></div>
+<noscript>This page needs JavaScript enabled.</noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var useState = React.useState, useEffect = React.useEffect, useMemo = React.useMemo;
+  var h = React.createElement;
+
+  function statusColorKey(status) {
+    var s = (status || "").toLowerCase();
+    if (s.indexOf("review hold") !== -1) return "yellow";
+    if (s.indexOf("item demand") !== -1) return "red";
+    if (s.indexOf("quantity") !== -1 || s.indexOf("quality") !== -1) return "red";
+    if (s.indexOf("success") !== -1) return "green";
+    return "";
+  }
+
+  // Profiles are named "<category> <jig name> (<number>)", e.g.
+  // "Cau Hung 3_letter_jig (6)" - or just "<category> <number>" when no
+  // jig name was used. Strips the category prefix and the trailing
+  // instance number/parens to recover just the jig name.
+  function extractJigName(profile, category) {
+    var p = (profile || "").trim();
+    var lowerP = p.toLowerCase();
+    var lowerCat = (category || "").toLowerCase();
+    var rest = p;
+    if (lowerCat && lowerP.indexOf(lowerCat) === 0) rest = p.slice(category.length).trim();
+    rest = rest.replace(/\(\s*\d+\s*\)\s*$/, "").trim();
+    rest = rest.replace(/\d+\s*$/, "").trim();
+    return rest || "(no jig)";
+  }
+
+  function flattenChannelIds(guilds) {
+    var ids = [];
+    guilds.forEach(function (g) {
+      g.categories.forEach(function (cat) {
+        cat.channels.forEach(function (ch) { ids.push(ch.id); });
+      });
+    });
+    return ids;
+  }
+
+  function CategoryGroup(props) {
+    var cat = props.category;
+    var selected = props.selected;
+    var allSelected = cat.channels.length > 0 && cat.channels.every(function (ch) { return selected.has(ch.id); });
+    return h("div", { className: "category-group" },
+      h("label", { className: "category-header" },
+        h("input", {
+          type: "checkbox", checked: allSelected,
+          onChange: function () { props.onToggleCategory(cat, !allSelected); },
+        }),
+        cat.name
+      ),
+      h("div", { className: "channel-list" },
+        cat.channels.map(function (ch) {
+          return h("label", { className: "channel-row", key: ch.id },
+            h("input", {
+              type: "checkbox", checked: selected.has(ch.id),
+              onChange: function () { props.onToggleChannel(ch.id); },
+            }),
+            h("span", { className: "channel-hash" }, "#"),
+            ch.name
+          );
+        })
+      )
+    );
+  }
+
+  function ScanProgress(props) {
+    var progress = props.progress;
+    if (!progress) return null;
+    if (progress.error) return h("p", { className: "muted small", style: { margin: 0 } }, "Error: " + progress.error);
+
+    var channels = Object.keys(progress.channels || {}).map(function (id) {
+      return Object.assign({ id: id }, progress.channels[id]);
+    });
+    var totals = channels.reduce(function (acc, c) {
+      acc.messages += c.messages_scanned || 0;
+      acc.orders += c.orders_found || 0;
+      acc.newRecords += c.new_records || 0;
+      return acc;
+    }, { messages: 0, orders: 0, newRecords: 0 });
+
+    return h("div", { className: "scan-progress" },
+      channels.map(function (c) {
+        var label = c.error ? "Error: " + c.error : c.done
+          ? c.messages_scanned + " msgs scanned, " + c.orders_found + " orders (" + c.new_records + " new)" + (c.rejected ? ", " + c.rejected + " unrecognized" : "")
+          : c.status === "scanning" ? c.messages_scanned + " msgs scanned so far…" : "Queued…";
+        return h("div", { className: "scan-channel-row", key: c.id },
+          h("span", { className: "scan-channel-name" }, "#" + c.name),
+          h("span", { className: "scan-channel-stats" }, label)
+        );
+      }),
+      h("div", { className: "scan-summary" },
+        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, totals.messages), h("div", { className: "scan-stat-label" }, "Messages scanned")),
+        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, totals.orders), h("div", { className: "scan-stat-label" }, "Orders found")),
+        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, totals.newRecords), h("div", { className: "scan-stat-label" }, "New records")),
+        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, progress.status === "complete" ? "Done" : "Running…"), h("div", { className: "scan-stat-label" }, "Status"))
+      )
+    );
+  }
+
+  // ---------- single-calendar date-range picker ----------
+
+  var MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  var DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+
+  function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+  function toIso(y, m, d) { return y + "-" + pad2(m + 1) + "-" + pad2(d); }
+  function parseIso(iso) {
+    if (!iso) return null;
+    var parts = iso.split("-");
+    return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10) - 1, d: parseInt(parts[2], 10) };
+  }
+  function formatDisplay(iso) {
+    var p = parseIso(iso);
+    if (!p) return "";
+    return MONTH_NAMES[p.m].slice(0, 3) + " " + p.d + ", " + p.y;
+  }
+  function buildCalendarWeeks(year, month) {
+    var firstDay = new Date(year, month, 1).getDay();
+    var numDays = new Date(year, month + 1, 0).getDate();
+    var cells = [];
+    for (var i = 0; i < firstDay; i++) cells.push(null);
+    for (var d = 1; d <= numDays; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+    var weeks = [];
+    for (var i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+    return weeks;
+  }
+
+  function DateRangePicker(props) {
+    var today = new Date();
+    var initial = parseIso(props.after) || { y: today.getFullYear(), m: today.getMonth() };
+    var s = useState({ y: initial.y, m: initial.m });
+    var view = s[0], setView = s[1];
+
+    var todayIso = toIso(today.getFullYear(), today.getMonth(), today.getDate());
+    var weeks = buildCalendarWeeks(view.y, view.m);
+
+    function handleDayClick(day) {
+      var iso = toIso(view.y, view.m, day);
+      if (!props.after || props.before) {
+        props.onChange(iso, "");
+      } else if (iso < props.after) {
+        props.onChange(iso, props.after);
+        if (props.onDone) props.onDone();
+      } else {
+        props.onChange(props.after, iso);
+        if (props.onDone) props.onDone();
+      }
+    }
+
+    function prevMonth() { setView(function (v) { var m = v.m - 1, y = v.y; if (m < 0) { m = 11; y--; } return { y: y, m: m }; }); }
+    function nextMonth() { setView(function (v) { var m = v.m + 1, y = v.y; if (m > 11) { m = 0; y++; } return { y: y, m: m }; }); }
+
+    return h("div", { className: "date-range-panel" },
+      h("div", { className: "date-range-header" },
+        h("button", { type: "button", className: "btn btn-ghost date-nav", onClick: prevMonth }, "‹"),
+        h("span", { className: "date-range-title" }, MONTH_NAMES[view.m] + " " + view.y),
+        h("button", { type: "button", className: "btn btn-ghost date-nav", onClick: nextMonth }, "›")
+      ),
+      h("div", { className: "date-grid" },
+        DAY_LABELS.map(function (l, i) { return h("span", { className: "date-cell-label", key: i }, l); })
+      ),
+      weeks.map(function (week, wi) {
+        return h("div", { className: "date-grid", key: wi },
+          week.map(function (day, di) {
+            if (!day) return h("span", { className: "date-cell date-cell-empty", key: di });
+            var iso = toIso(view.y, view.m, day);
+            var inRange = props.after && props.before && iso >= props.after && iso <= props.before;
+            var isEdge = iso === props.after || iso === props.before;
+            var cls = "date-cell date-cell-day";
+            if (inRange) cls += " date-cell-inrange";
+            if (isEdge) cls += " date-cell-selected";
+            if (iso === todayIso) cls += " date-cell-today";
+            return h("button", {
+              type: "button", key: di, className: cls,
+              onClick: function () { handleDayClick(day); },
+            }, day);
+          })
+        );
+      }),
+      h("div", { className: "date-range-footer" },
+        h("button", { type: "button", className: "btn btn-ghost", onClick: function () { props.onChange("", ""); } }, "Clear")
+      )
+    );
+  }
+
+  function App() {
+    var s1 = useState(null); var data = s1[0], setData = s1[1]; // raw API response
+    var s2 = useState(true); var loading = s2[0], setLoading = s2[1];
+    var s3 = useState(new Set()); var selected = s3[0], setSelected = s3[1];
+    var s4 = useState(""); var saveStatus = s4[0], setSaveStatus = s4[1];
+    var s5 = useState(false); var saving = s5[0], setSaving = s5[1];
+    var s6 = useState(null); var scanProgress = s6[0], setScanProgress = s6[1];
+    var s8 = useState(""); var searchInput = s8[0], setSearchInput = s8[1];
+    var s9 = useState(null); var searchResults = s9[0], setSearchResults = s9[1];
+    var s10 = useState(false); var searching = s10[0], setSearching = s10[1];
+    var s12 = useState(false); var channelDropdownOpen = s12[0], setChannelDropdownOpen = s12[1];
+    var s17 = useState(false); var toastVisible = s17[0], setToastVisible = s17[1];
+    var s18 = useState(false); var toastLeaving = s18[0], setToastLeaving = s18[1];
+    var s19 = useState(""); var searchAfter = s19[0], setSearchAfter = s19[1];
+    var s20 = useState(""); var searchBefore = s20[0], setSearchBefore = s20[1];
+    var s21 = useState(true); var searchDateDropdownOpen = s21[0], setSearchDateDropdownOpen = s21[1];
+    var s22 = useState(""); var searchDateError = s22[0], setSearchDateError = s22[1];
+    var s23 = useState(new Set()); var statusFilter = s23[0], setStatusFilter = s23[1];
+    var s24 = useState({}); var copyStatus = s24[0], setCopyStatus = s24[1];
+    var s25 = useState(new Set()); var categoryFilter = s25[0], setCategoryFilter = s25[1];
+    var s26 = useState(false); var statusFilterOpen = s26[0], setStatusFilterOpen = s26[1];
+    var s27 = useState(false); var categoryFilterOpen = s27[0], setCategoryFilterOpen = s27[1];
+    var s28 = useState([]); var lastSearchTerms = s28[0], setLastSearchTerms = s28[1];
+    var s29 = useState(""); var searchPhase = s29[0], setSearchPhase = s29[1];
+    var s30 = useState(""); var searchNote = s30[0], setSearchNote = s30[1];
+    var toastTimers = React.useRef([]);
+    var copyTimers = React.useRef({});
+    var statusFilterRef = React.useRef(null);
+    var categoryFilterRef = React.useRef(null);
+
+    useEffect(function () {
+      function handleClickOutside(e) {
+        if (statusFilterRef.current && !statusFilterRef.current.contains(e.target)) setStatusFilterOpen(false);
+        if (categoryFilterRef.current && !categoryFilterRef.current.contains(e.target)) setCategoryFilterOpen(false);
+      }
+      document.addEventListener("mousedown", handleClickOutside);
+      return function () { document.removeEventListener("mousedown", handleClickOutside); };
+    }, []);
+
+    function clearToastTimers() {
+      toastTimers.current.forEach(function (id) { clearTimeout(id); });
+      toastTimers.current = [];
+    }
+
+    function scheduleToastHide() {
+      clearToastTimers();
+      toastTimers.current.push(setTimeout(function () { setToastLeaving(true); }, 2200));
+      toastTimers.current.push(setTimeout(function () { setToastVisible(false); setToastLeaving(false); }, 2450));
+    }
+
+    function load(silent) {
+      if (!silent) setLoading(true);
+      fetch("/api/discord/channels")
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          setData(json);
+          // Silent background refreshes only update the connection/guild info -
+          // never the checkbox selection, so they can't clobber channel picks
+          // the user is still in the middle of making before hitting Save.
+          if (!silent) setSelected(new Set(json.selected || []));
+        })
+        .catch(function () {
+          if (!silent) {
+            setData({ connected: false, guilds: [], selected: [], error: "Could not reach Account Analysis's backend." });
+          }
+        })
+        .finally(function () { if (!silent) setLoading(false); });
+    }
+
+    useEffect(function () {
+      load();
+      var interval = setInterval(function () { load(true); }, 15000);
+      return function () { clearInterval(interval); };
+    }, []);
+
+    useEffect(function () {
+      fetch("/api/discord/search-terms")
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          if (json.terms && json.terms.length) setSearchInput(json.terms.join(", "));
+        })
+        .catch(function () {});
+    }, []);
+
+    var allIds = useMemo(function () { return data ? flattenChannelIds(data.guilds || []) : []; }, [data]);
+
+    function toggleChannel(id) {
+      setSelected(function (prev) {
+        var next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+      });
+    }
+
+    function toggleCategory(cat, on) {
+      setSelected(function (prev) {
+        var next = new Set(prev);
+        cat.channels.forEach(function (ch) { if (on) next.add(ch.id); else next.delete(ch.id); });
+        return next;
+      });
+    }
+
+    function selectAll() { setSelected(new Set(allIds)); }
+    function clearAll() { setSelected(new Set()); }
+
+    function saveSelection() {
+      setSaving(true);
+      setSaveStatus("Saving…");
+      fetch("/api/discord/channels/selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel_ids: Array.from(selected) }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          if (json.error) { setSaveStatus(json.error); return; }
+          setSelected(new Set(json.selected || []));
+          setSaveStatus("Saved " + (json.selected || []).length + " channel(s).");
+        })
+        .catch(function () { setSaveStatus("Couldn't save - is Account Analysis still running?"); })
+        .finally(function () { setSaving(false); setTimeout(function () { setSaveStatus(""); }, 3000); });
+    }
+
+    function scanHasError(progress) {
+      if (!progress) return false;
+      if (progress.error) return true;
+      var channels = progress.channels || {};
+      return Object.keys(channels).some(function (id) { return !!channels[id].error; });
+    }
+
+    function waitForScan(scanId) {
+      return new Promise(function (resolve) {
+        function tick() {
+          fetch("/api/discord/scan/" + scanId)
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+              setScanProgress(json);
+              if (json.status === "complete" || json.error) resolve(json);
+              else setTimeout(tick, 1200);
+            })
+            .catch(function () { resolve({ error: "Lost contact with Account Analysis while scanning." }); });
+        }
+        tick();
+      });
+    }
+
+    // Starts a scan and resolves with its final progress (or {error}).
+    // Shared by the Scan button and by Search, which scans first.
+    function runScan(body) {
+      clearToastTimers();
+      setToastLeaving(false);
+      setToastVisible(true);
+      setScanProgress(null);
+      return fetch("/api/discord/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (json) { return json.error ? { error: json.error } : waitForScan(json.scan_id); })
+        .catch(function () { return { error: "Could not start scan." }; })
+        .then(function (finalProgress) {
+          setScanProgress(finalProgress);
+          // Keep the popup on screen if anything went wrong instead of
+          // auto-hiding it - a scan that stopped partway through (e.g. a
+          // channel error) is easy to miss if the toast fades in 2.5s.
+          if (!scanHasError(finalProgress)) scheduleToastHide();
+          return finalProgress;
+        });
+    }
+
+    // Search = scan the selected channels for the chosen date range (only
+    // what's new when no range is set), then search what's stored.
+    function runSearch() {
+      var names = searchInput.split(/[,\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!names.length) return;
+      if (searchAfter && searchBefore && searchAfter > searchBefore) {
+        setSearchDateError("'From' date must be before 'To' date.");
+        return;
+      }
+      setSearchDateError("");
+      setSearching(true);
+
+      var canScan = !!(data && data.connected) && selected.size > 0;
+      setSearchNote(canScan ? "" : "Not fetching from Discord (" + (selected.size === 0 ? "no channels selected" : "disconnected") + ") - showing saved data.");
+      setSearchPhase(canScan ? "scanning" : "searching");
+
+      var scanStep = canScan
+        ? runScan({ channel_ids: Array.from(selected), after: searchAfter || null, before: searchBefore || null, incremental: true })
+        : Promise.resolve(null);
+
+      scanStep
+        .then(function () {
+          setSearchPhase("searching");
+          return fetch("/api/discord/profiles/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ names: names, after: searchAfter || null, before: searchBefore || null }),
+          });
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          setSearchResults(json);
+          var statuses = json && json.byStatus ? Object.keys(json.byStatus) : [];
+          setStatusFilter(new Set(statuses));
+          setLastSearchTerms(names);
+          setCategoryFilter(new Set(names));
+        })
+        .catch(function () { setSearchResults({ error: "Search failed - is Account Analysis still running?" }); })
+        .finally(function () { setSearching(false); setSearchPhase(""); });
+    }
+
+    function toggleStatusFilter(status) {
+      setStatusFilter(function (prev) {
+        var next = new Set(prev);
+        if (next.has(status)) next.delete(status); else next.add(status);
+        return next;
+      });
+    }
+
+    // Which of the searched keywords (e.g. "Co Mary", "Kem") a profile name
+    // matches - a profile can belong to more than one category if its name
+    // happens to contain more than one searched term.
+    function profileCategories(profile) {
+      var p = (profile || "").toLowerCase();
+      return lastSearchTerms.filter(function (term) { return p.indexOf(term.toLowerCase()) !== -1; });
+    }
+
+    function toggleCategoryFilter(term) {
+      setCategoryFilter(function (prev) {
+        var next = new Set(prev);
+        if (next.has(term)) next.delete(term); else next.add(term);
+        return next;
+      });
+    }
+
+    function copyProfiles(status, profiles) {
+      if (!profiles.length) return;
+      var text = profiles.join("\n");
+
+      function legacyCopy() {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+
+      function showResult(ok) {
+        var message = ok ? "Copied " + profiles.length : "Couldn't copy";
+        setCopyStatus(function (prev) { var next = Object.assign({}, prev); next[status] = message; return next; });
+        if (copyTimers.current[status]) clearTimeout(copyTimers.current[status]);
+        copyTimers.current[status] = setTimeout(function () {
+          setCopyStatus(function (prev) { var next = Object.assign({}, prev); delete next[status]; return next; });
+        }, 2000);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { showResult(true); }, function () { showResult(legacyCopy()); });
+      } else {
+        showResult(legacyCopy());
+      }
+    }
+
+    var connected = data && data.connected;
+    var guilds = (data && data.guilds) || [];
+    var categoryCounts = useMemo(function () {
+      var counts = {};
+      lastSearchTerms.forEach(function (term) { counts[term] = new Set(); });
+      if (searchResults && !searchResults.error) {
+        Object.keys(searchResults.byStatus).forEach(function (status) {
+          searchResults.byStatus[status].forEach(function (p) {
+            profileCategories(p).forEach(function (term) { counts[term].add(p); });
+          });
+        });
+      }
+      var out = {};
+      Object.keys(counts).forEach(function (term) { out[term] = counts[term].size; });
+      return out;
+    }, [searchResults, lastSearchTerms]);
+
+    // category -> jig name -> status -> count, scoped to whatever's
+    // currently checked in both filter dropdowns so it always matches
+    // what's shown in the detailed groups below.
+    var jigBreakdown = useMemo(function () {
+      var result = {};
+      if (!searchResults || searchResults.error) return result;
+      Object.keys(searchResults.byStatus).forEach(function (status) {
+        if (!statusFilter.has(status)) return;
+        searchResults.byStatus[status].forEach(function (profile) {
+          profileCategories(profile).forEach(function (category) {
+            if (!categoryFilter.has(category)) return;
+            var jig = extractJigName(profile, category);
+            result[category] = result[category] || {};
+            result[category][jig] = result[category][jig] || {};
+            result[category][jig][status] = (result[category][jig][status] || 0) + 1;
+          });
+        });
+      });
+      return result;
+    }, [searchResults, statusFilter, categoryFilter, lastSearchTerms]);
+
+    return h("div", { className: "app-shell" },
+      h("nav", { className: "page-nav" },
+        h("a", { className: "page-nav-link", href: "/" }, "Account Analysis"),
+        h("a", { className: "page-nav-link page-nav-active", href: "/discord.html" }, "Jigging Analysis")
+      ),
+      h("header", { className: "topbar" },
+        h("div", { className: "brand" },
+          h("span", { className: "brand-mark" }, "OL"),
+          h("div", null,
+            h("h1", { className: "brand-title" }, "Jigging Analysis"),
+            h("p", { className: "brand-tag" }, "Track order notifications posted in Discord as a second data source, kept separate from CSV accounts.")
+          )
+        )
+      ),
+
+      h("div", null,
+        h("div", { className: "status-pill" },
+          h("span", { className: "status-dot " + (connected ? "status-dot-on" : "status-dot-off") }),
+          h("span", { className: "status-text" }, loading ? "Checking…" : connected ? "Discord Connected" : "Discord Disconnected"),
+          h("button", {
+            className: "icon-btn" + (loading ? " icon-btn-spin" : ""),
+            onClick: function () { load(); }, disabled: loading, title: "Refresh connection status", type: "button",
+          }, "↻")
+        ),
+        !loading && !connected ? h("p", { className: "muted small", style: { margin: "6px 0 0" } },
+          (data && data.error)
+            ? "Error: " + data.error
+            : "Make sure DISCORD_TOKEN is set in your .env file, the required packages are installed (pip install -r requirements.txt), and Account Analysis has been restarted."
+        ) : null
+      ),
+
+      h("div", { className: "workspace" },
+        h("aside", { className: "sidebar" },
+          h("div", { className: "sidebar-card" },
+            h("h2", { className: "sidebar-title" }, "Search Profiles"),
+            h("div", { className: "search-row" },
+              h("input", {
+                type: "text", className: "search-input-inline", placeholder: "Co Mary, John Smith",
+                value: searchInput,
+                onChange: function (e) { setSearchInput(e.target.value); },
+                onKeyDown: function (e) { if (e.key === "Enter") runSearch(); },
+              }),
+              h("button", { className: "btn btn-primary", onClick: runSearch, disabled: searching || !searchInput.trim() }, searchPhase === "scanning" ? "Scanning…" : searching ? "…" : "Search")
+            ),
+            h("p", { className: "panel-hint", style: { margin: 0 } }, "Comma-separated, partial names OK. Search fetches new Discord messages for the date range first."),
+            searchNote ? h("p", { className: "muted small", style: { margin: 0 } }, searchNote) : null,
+            h("button", {
+              className: "btn dropdown-trigger", type: "button",
+              onClick: function () { setSearchDateDropdownOpen(!searchDateDropdownOpen); },
+            },
+              (searchAfter || searchBefore)
+                ? (formatDisplay(searchAfter) + " – " + (searchBefore ? formatDisplay(searchBefore) : "…"))
+                : "All history",
+              h("span", { className: "chevron" + (searchDateDropdownOpen ? " chevron-open" : "") }, "▾")
+            ),
+            searchDateDropdownOpen ? h(DateRangePicker, {
+              after: searchAfter, before: searchBefore,
+              onChange: function (a, b) { setSearchAfter(a); setSearchBefore(b); setSearchDateError(""); },
+              onDone: function () { setSearchDateDropdownOpen(false); },
+            }) : null,
+            searchDateError ? h("p", { className: "muted small", style: { margin: 0, color: "var(--stamp-cancel)" } }, searchDateError) : null,
+            searchResults && searchResults.error ? h("p", { className: "muted small", style: { margin: 0 } }, searchResults.error) : null
+          ),
+
+          h("div", { className: "sidebar-card" },
+            h("h2", { className: "sidebar-title" }, "Select Discord Channels"),
+            loading ? h("p", { className: "muted small", style: { margin: 0 } }, "Loading…")
+              : !connected ? h("p", { className: "muted small", style: { margin: 0 } }, "Not connected.")
+              : guilds.length === 0 ? h("p", { className: "muted small", style: { margin: 0 } }, "No accessible channels.")
+              : h(React.Fragment, null,
+                  h("button", {
+                    className: "btn dropdown-trigger",
+                    onClick: function () { setChannelDropdownOpen(!channelDropdownOpen); },
+                  },
+                    selected.size + " channel" + (selected.size === 1 ? "" : "s") + " selected",
+                    h("span", { className: "chevron" + (channelDropdownOpen ? " chevron-open" : "") }, "▾")
+                  ),
+                  channelDropdownOpen ? h("div", { className: "dropdown-panel scroll-box" },
+                    h("div", { className: "selector-actions" },
+                      h("button", { className: "btn btn-ghost", onClick: selectAll }, "Select All"),
+                      h("button", { className: "btn btn-ghost", onClick: clearAll }, "Clear All")
+                    ),
+                    guilds.map(function (g) {
+                      return h("div", { className: "guild-block", key: g.id },
+                        h("h3", { className: "guild-name" }, g.name),
+                        g.categories.map(function (cat) {
+                          return h(CategoryGroup, {
+                            key: cat.id, category: cat, selected: selected,
+                            onToggleChannel: toggleChannel, onToggleCategory: toggleCategory,
+                          });
+                        })
+                      );
+                    })
+                  ) : null,
+                  h("button", { className: "btn btn-primary btn-block", onClick: saveSelection, disabled: saving }, saving ? "Saving…" : "Save Selection"),
+                  saveStatus ? h("p", { className: "save-status", style: { margin: 0 } }, saveStatus) : null,
+                )
+          )
+        ),
+
+        h("div", { className: "main-results" },
+          searchResults && !searchResults.error ? h("section", { className: "card" },
+            h("h2", { className: "panel-title" }, "Search Results"),
+            Object.keys(searchResults.byStatus).length === 0
+              ? h("p", { className: "muted small", style: { margin: 0 } }, "No matching orders found.")
+              : h(React.Fragment, null,
+                  h("div", { className: "result-filter-row" },
+                    h("div", { className: "result-filter", ref: statusFilterRef },
+                      h("button", {
+                        className: "btn dropdown-trigger", type: "button",
+                        onClick: function () { setStatusFilterOpen(!statusFilterOpen); },
+                      },
+                        statusFilter.size + " of " + Object.keys(searchResults.byStatus).length + " statuses",
+                        h("span", { className: "chevron" + (statusFilterOpen ? " chevron-open" : "") }, "▾")
+                      ),
+                      statusFilterOpen ? h("div", { className: "dropdown-panel scroll-box" },
+                        h("div", { className: "selector-actions" },
+                          h("button", { className: "btn btn-ghost", onClick: function () { setStatusFilter(new Set(Object.keys(searchResults.byStatus))); } }, "Select All"),
+                          h("button", { className: "btn btn-ghost", onClick: function () { setStatusFilter(new Set()); } }, "Clear All")
+                        ),
+                        Object.keys(searchResults.byStatus).map(function (status) {
+                          var colorKey = statusColorKey(status) || "neutral";
+                          return h("label", { className: "filter-option", key: status },
+                            h("input", { type: "checkbox", checked: statusFilter.has(status), onChange: function () { toggleStatusFilter(status); } }),
+                            h("span", { className: "status-color-dot status-color-" + colorKey }),
+                            status + " (" + searchResults.byStatus[status].length + ")"
+                          );
+                        })
+                      ) : null
+                    ),
+                    h("div", { className: "result-filter", ref: categoryFilterRef },
+                      h("button", {
+                        className: "btn dropdown-trigger", type: "button",
+                        onClick: function () { setCategoryFilterOpen(!categoryFilterOpen); },
+                      },
+                        categoryFilter.size + " of " + lastSearchTerms.length + " keywords",
+                        h("span", { className: "chevron" + (categoryFilterOpen ? " chevron-open" : "") }, "▾")
+                      ),
+                      categoryFilterOpen ? h("div", { className: "dropdown-panel scroll-box" },
+                        h("div", { className: "selector-actions" },
+                          h("button", { className: "btn btn-ghost", onClick: function () { setCategoryFilter(new Set(lastSearchTerms)); } }, "Select All"),
+                          h("button", { className: "btn btn-ghost", onClick: function () { setCategoryFilter(new Set()); } }, "Clear All")
+                        ),
+                        lastSearchTerms.map(function (term) {
+                          return h("label", { className: "filter-option", key: term },
+                            h("input", { type: "checkbox", checked: categoryFilter.has(term), onChange: function () { toggleCategoryFilter(term); } }),
+                            term + " (" + (categoryCounts[term] || 0) + ")"
+                          );
+                        })
+                      ) : null
+                    )
+                  ),
+                  Object.keys(jigBreakdown).length > 0 ? h("div", { className: "status-group" },
+                    h("div", { className: "status-group-header" }, "Jig Breakdown"),
+                    Object.keys(jigBreakdown).sort().map(function (category) {
+                      var jigs = jigBreakdown[category];
+                      return h("div", { key: category, style: { display: "flex", flexDirection: "column", gap: "4px" } },
+                        h("div", { className: "jig-category-name" }, category),
+                        Object.keys(jigs).sort().map(function (jigName) {
+                          var counts = jigs[jigName];
+                          return h("div", { className: "jig-row", key: jigName },
+                            h("div", { className: "jig-stats" },
+                              Object.keys(counts).sort().map(function (status) {
+                                var colorKey = statusColorKey(status) || "neutral";
+                                return h("div", { className: "jig-stat-line jig-stat-" + colorKey, key: status },
+                                  h("span", { className: "jig-stat-status" },
+                                    h("span", { className: "jig-name" }, jigName), ": ", status
+                                  ),
+                                  h("span", { className: "jig-stat-count" }, "(" + counts[status] + ")")
+                                );
+                              })
+                            )
+                          );
+                        })
+                      );
+                    })
+                  ) : null,
+                  h("div", { className: "scan-progress" },
+                    Object.keys(searchResults.byStatus).filter(function (status) { return statusFilter.has(status); }).map(function (status) {
+                      var profiles = searchResults.byStatus[status].filter(function (p) {
+                        return profileCategories(p).some(function (term) { return categoryFilter.has(term); });
+                      });
+                      if (!profiles.length) return null;
+                      var colorKey = statusColorKey(status) || "neutral";
+                      return h("div", { className: "status-group status-group-" + colorKey, key: status },
+                        h("div", { className: "status-group-header-row" },
+                          h("div", { className: "status-group-header" }, status + " (" + profiles.length + ")"),
+                          h("div", { className: "status-group-header-actions" },
+                            copyStatus[status] ? h("span", { className: "muted small" }, copyStatus[status]) : null,
+                            h("button", {
+                              type: "button", className: "btn btn-ghost small",
+                              onClick: function () { copyProfiles(status, profiles); },
+                            }, "Copy")
+                          )
+                        ),
+                        h("div", { className: "profile-chip-row" },
+                          profiles.map(function (p) {
+                            return h("span", { key: p, className: "profile-chip" }, p);
+                          })
+                        )
+                      );
+                    })
+                  )
+                )
+          ) : null,
+
+          !searchResults ? h("div", { className: "empty-state" },
+            "Search a profile or run a scan to see results here."
+          ) : null
+        )
+      ),
+
+      h("footer", { className: "footer-note" }, "Discord data stays local to this machine, in database/order_ledger.db."),
+
+      toastVisible && scanProgress ? h("div", { className: "toast-wrap card" + (toastLeaving ? " toast-leaving" : "") },
+        h("h2", { className: "panel-title" }, "Scan Progress"),
+        h(ScanProgress, { progress: scanProgress })
+      ) : null
+    );
+  }
+
+  var rootEl = document.getElementById("root");
+  ReactDOM.createRoot(rootEl).render(h(App));
+})();
+</script>

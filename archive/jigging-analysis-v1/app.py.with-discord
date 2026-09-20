@@ -1,0 +1,326 @@
+import http.server
+import json
+import socket
+import sys
+import webbrowser
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+# The feature folders have spaces in their names, so they can't be imported as
+# packages - put them on the import path so their modules import by plain name.
+_BACKEND_DIR = Path(__file__).parent
+for _sub in ("order analysis", "jigging analysis"):
+    sys.path.insert(0, str(_BACKEND_DIR / _sub))
+
+from order_analysis import rows_from_csv_text
+
+# Pure-Python/stdlib-only - safe to import unconditionally even when
+# discord.py itself isn't installed. discord_storage's SQLite data also
+# outlives any single Discord connection, so profile search still works
+# from previously-scanned data even while Discord is disconnected.
+import discord_storage
+import discord_analysis
+
+try:
+    import discord_client
+except Exception as e:
+    discord_client = None
+    print(
+        f"Discord integration unavailable ({e}). "
+        "Install with: pip install -r requirements.txt. CSV analysis is unaffected."
+    )
+
+HOST = "127.0.0.1"
+DEFAULT_PORT = 8000
+PROJECT_ROOT = Path(__file__).parent.parent
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
+FRONTEND_FILE = FRONTEND_DIR / "index.html"
+DISCORD_PAGE_FILE = FRONTEND_DIR / "discord.html"
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
+    def _send_json(self, status, payload):
+        body = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        if self.path in ("/", "/index.html"):
+            self._serve_page(FRONTEND_FILE)
+        elif self.path in ("/discord", "/discord.html"):
+            self._serve_page(DISCORD_PAGE_FILE)
+        elif self.path == "/api/discord/channels":
+            self._handle_discord_channels()
+        elif self.path == "/api/discord/search-terms":
+            self._handle_discord_search_terms_get()
+        elif self.path.startswith("/api/discord/scan/"):
+            scan_id = self.path[len("/api/discord/scan/"):]
+            self._handle_discord_scan_progress(scan_id)
+        else:
+            self.send_error(404)
+
+    def _serve_page(self, file_path):
+        if not file_path.exists():
+            self.send_error(404, f"{file_path.name} not found")
+            return
+        body = file_path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        if self.path == "/api/analyze":
+            self._handle_analyze()
+        elif self.path == "/api/discord/channels/selection":
+            self._handle_discord_selection()
+        elif self.path == "/api/discord/scan":
+            self._handle_discord_scan_start()
+        elif self.path == "/api/discord/profiles/search":
+            self._handle_discord_profile_search()
+        else:
+            self.send_error(404)
+
+    def _handle_analyze(self):
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            payload = json.loads(raw or b"{}")
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "Invalid JSON"})
+            return
+
+        results = []
+        for f in payload.get("files", []):
+            name = str(f.get("name") or "upload.csv")
+            text = f.get("text") or ""
+            rows, warning = rows_from_csv_text(name, text)
+            results.append({
+                "name": name,
+                "count": len(rows),
+                "warning": warning,
+                "rows": [
+                    {
+                        "email": r["email"],
+                        "status": r["status"],
+                        "statusRaw": r["status_raw"],
+                        "dateRaw": r["date_raw"],
+                        "product": r["product"],
+                        "retailer": r["retailer"],
+                    }
+                    for r in rows
+                ],
+            })
+        self._send_json(200, {"files": results})
+
+    def _handle_discord_channels(self):
+        """GET /api/discord/channels - the guild/category/channel tree the
+        bot can access, plus which of those are currently selected. Never
+        returns the bot token."""
+        if discord_client is None or not discord_client.is_connected():
+            self._send_json(200, {"connected": False, "guilds": [], "selected": []})
+            return
+        try:
+            tree = discord_client.get_channel_tree_sync()
+            selected = discord_client.get_selected_channel_ids()
+            self._send_json(200, {"connected": True, "guilds": tree, "selected": selected})
+        except Exception as e:
+            self._send_json(200, {"connected": False, "error": str(e), "guilds": [], "selected": []})
+
+    def _handle_discord_selection(self):
+        """POST /api/discord/channels/selection {channel_ids: [...]} -
+        persists which channels to scan/monitor. IDs are validated against
+        what the bot can actually access; anything else is silently
+        dropped rather than trusted."""
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            payload = json.loads(raw or b"{}")
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "Invalid JSON"})
+            return
+
+        if discord_client is None or not discord_client.is_connected():
+            self._send_json(200, {"error": "Discord not connected", "selected": []})
+            return
+
+        try:
+            valid = discord_client.set_selected_channels(payload.get("channel_ids", []))
+            self._send_json(200, {"selected": valid})
+        except Exception as e:
+            self._send_json(200, {"error": str(e), "selected": discord_client.get_selected_channel_ids()})
+
+    def _handle_discord_scan_start(self):
+        """POST /api/discord/scan {channel_ids: [...], after, before} -
+        starts a historical scan of those channels in the background and
+        returns a scan_id immediately (never blocks the HTTP server while
+        scanning). Channel IDs are re-validated inside discord_client
+        against what the bot can actually access. `after`/`before` are
+        optional "YYYY-MM-DD" strings from the date-range picker; omit
+        either (or both) to leave that end open."""
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            payload = json.loads(raw or b"{}")
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "Invalid JSON"})
+            return
+
+        if discord_client is None or not discord_client.is_connected():
+            self._send_json(200, {"error": "Discord not connected"})
+            return
+
+        try:
+            after = _parse_date_bound(payload.get("after"))
+            before = _parse_date_bound(payload.get("before"), end_of_day=True)
+        except ValueError:
+            self._send_json(400, {"error": "Dates must be in YYYY-MM-DD format"})
+            return
+        if after and before and after >= before:
+            self._send_json(400, {"error": "'From' date must be before 'To' date"})
+            return
+
+        try:
+            scan_id = discord_client.start_scan(
+                payload.get("channel_ids", []), after=after, before=before,
+                incremental=bool(payload.get("incremental")),
+            )
+            self._send_json(200, {"scan_id": scan_id})
+        except Exception as e:
+            self._send_json(200, {"error": str(e)})
+
+    def _handle_discord_scan_progress(self, scan_id):
+        """GET /api/discord/scan/<scan_id> - poll target for scan progress."""
+        if discord_client is None:
+            self._send_json(404, {"error": "Unknown scan_id"})
+            return
+        progress = discord_client.get_scan_progress(scan_id)
+        if progress is None:
+            self._send_json(404, {"error": "Unknown scan_id"})
+            return
+        self._send_json(200, progress)
+
+    def _handle_discord_profile_search(self):
+        """POST /api/discord/profiles/search {names: [...], after, before} -
+        searches already-scanned/stored Discord order records for one or
+        more profile names (partial, case-insensitive). `after`/`before`
+        are optional "YYYY-MM-DD" strings (same date-range picker as
+        Scan Discord History) narrowing results to that window - omit
+        either/both to search all stored history. Works even while
+        Discord is disconnected, since it only reads local SQLite data."""
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            payload = json.loads(raw or b"{}")
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "Invalid JSON"})
+            return
+
+        try:
+            after = _parse_date_bound(payload.get("after"))
+            before = _parse_date_bound(payload.get("before"), end_of_day=True)
+        except ValueError:
+            self._send_json(400, {"error": "Dates must be in YYYY-MM-DD format"})
+            return
+        if after and before and after >= before:
+            self._send_json(400, {"error": "'From' date must be before 'To' date"})
+            return
+
+        names = payload.get("names", [])
+        try:
+            rows = discord_storage.search_orders_by_profile_terms(
+                names,
+                after=after.isoformat() if after else None,
+                before=before.isoformat() if before else None,
+            )
+            self._send_json(200, {
+                "byStatus": discord_analysis.group_by_status(rows),
+                "byProfile": discord_analysis.group_by_profile(rows),
+            })
+        except Exception as e:
+            self._send_json(200, {"error": str(e), "byStatus": {}, "byProfile": {}})
+            return
+
+        try:
+            discord_storage.set_search_terms(names)
+        except Exception:
+            pass  # remembering the search terms is a convenience, never worth failing the search over
+
+    def _handle_discord_search_terms_get(self):
+        """GET /api/discord/search-terms - the remembered profile search
+        terms (starts out as a sensible default, then always reflects the
+        last search actually run) so the search box can prefill itself."""
+        try:
+            self._send_json(200, {"terms": discord_storage.get_search_terms()})
+        except Exception as e:
+            self._send_json(200, {"terms": [], "error": str(e)})
+
+    def log_message(self, fmt, *args):
+        print(f"  {self.address_string()} - {fmt % args}")
+
+
+def _parse_date_bound(date_str, end_of_day=False):
+    """Parses a "YYYY-MM-DD" string (from an <input type=date>) into a
+    timezone-aware UTC datetime for discord.py's channel.history(after=,
+    before=). None/empty stays None (an open-ended bound). `end_of_day`
+    pushes a "before" bound to the start of the NEXT day, so the selected
+    day itself is included."""
+    if not date_str:
+        return None
+    dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    if end_of_day:
+        dt += timedelta(days=1)
+    return dt
+
+
+def find_open_port(start):
+    port = start
+    for _ in range(20):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex((HOST, port)) != 0:
+                return port
+        port += 1
+    return start
+
+
+def main():
+    if not FRONTEND_FILE.exists():
+        print(f"Could not find {FRONTEND_FILE} - is the frontend/ folder present?")
+        return
+
+    try:
+        discord_storage.init_db()
+    except Exception as e:
+        print(f"Discord: local database unavailable ({e}). Profile search will be empty until this is fixed.")
+
+    port = find_open_port(DEFAULT_PORT)
+    server = http.server.ThreadingHTTPServer((HOST, port), Handler)
+    url = f"http://{HOST}:{port}/"
+
+    print(f"Order Ledger running at {url}")
+
+    if discord_client is not None:
+        try:
+            discord_client.start_background()
+        except Exception as e:
+            print(f"Discord: startup failed unexpectedly ({e}). Continuing without Discord.")
+
+    print("Press Ctrl+C to stop.\n")
+    webbrowser.open(url)
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopping...")
+    finally:
+        server.shutdown()
+
+
+if __name__ == "__main__":
+    main()

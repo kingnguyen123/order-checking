@@ -916,10 +916,6 @@
     var warnings = fileEntries.filter(function (f) { return f.warning; }).map(function (f) { return f.name + ": " + f.warning; });
 
     return h("div", { className: "app-shell" },
-      h("nav", { className: "page-nav" },
-        h("a", { className: "page-nav-link page-nav-active", href: "/" }, "Account Analysis"),
-        h("a", { className: "page-nav-link", href: "/discord.html" }, "Jigging Analysis")
-      ),
       h("header", { className: "topbar" },
         h("div", { className: "brand" },
           h("span", { className: "brand-mark" }, "OL"),

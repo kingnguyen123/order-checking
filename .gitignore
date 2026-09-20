@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets - never commit your real Discord token
+.env
+
+# Local Discord order database
+*.db
+
+# CSV order exports may contain real customer data
+csv/*.csv

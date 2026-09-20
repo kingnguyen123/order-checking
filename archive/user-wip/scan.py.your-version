@@ -1,0 +1,27 @@
+import argparse
+import os
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import discord
+from dotenv import load_dotenv
+
+from parser import parse
+from storage import record
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+
+def day_bound(text, end_of_day=False):
+    """'2026-09-16' -> aware datetime at midnight in YOUR local timezone.
+    end_of_day pushes to the next midnight so the whole end day is included."""
+    if not text:
+        return None
+    dt = datetime.strptime(text, "%Y-%m-%d").astimezone()   # naive -> assumed local, made aware
+    return dt + timedelta(days=1) if end_of_day else dt
+
+# finding channels
+def build_channels_list(client):
+    channel=[]
+    for guild in client.guilds:
+        for channel in guild.text_channels:
+            permission= channel.permissions_for
+    
