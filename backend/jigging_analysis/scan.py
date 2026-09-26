@@ -158,7 +158,7 @@ async def scan_channel(channel, limit=None, after=None, before=None, on_progress
             if result:
                 profile, status = result
                 stats["orders"] += 1
-                if record(message.id, channel.id, profile, status, message.created_at.isoformat()):
+                if record(message.id, channel.id, profile, status, message.created_at.isoformat(), channel_name=channel.name):
                     stats["new"] += 1
             elif message.embeds:
                 stats["rejected"] += 1

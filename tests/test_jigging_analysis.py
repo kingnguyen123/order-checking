@@ -122,6 +122,15 @@ class StorageTests(unittest.TestCase):
         found = {r["profile"] for r in storage.search_orders_by_profile_terms(["CO MARY", "kem"])}
         self.assertEqual(found, {"Co Mary A (1)", "co mary 12", "Kem X (2)"})
 
+    def test_empty_terms_means_search_everything_not_nothing(self):
+        for i, name in enumerate(["Co Mary A (1)", "Kem X (2)", "Someone Else"]):
+            storage.record(str(i), "10", name, "S", "2026-09-16T10:00:00+00:00")
+        found = {r["profile"] for r in storage.search_orders_by_profile_terms([])}
+        self.assertEqual(found, {"Co Mary A (1)", "Kem X (2)", "Someone Else"})
+        # still honors the date range even with no profile name given
+        found_none = storage.search_orders_by_profile_terms([], after="2026-09-17T00:00:00+00:00")
+        self.assertEqual(found_none, [])
+
     def test_date_range_uses_the_users_day_not_utc(self):
         start, end = dates.day_bound("2026-09-16"), dates.day_bound("2026-09-16", end_of_day=True)
         inside = [start + timedelta(hours=1), end - timedelta(minutes=1)]
@@ -142,12 +151,41 @@ class StorageTests(unittest.TestCase):
         storage.set_selected_channel_ids(["2"])
         self.assertEqual(storage.get_selected_channel_ids(), ["2"])
 
+    def test_search_rows_carry_the_channel_name_given_at_record_time(self):
+        storage.record("1", "10", "A (1)", "S", "2026-09-16T10:00:00+00:00", channel_name="checkout")
+        storage.record("2", "20", "A (1)", "S", "2026-09-16T11:00:00+00:00")   # no name given
+        rows = {r["channel_id"]: r["channel_name"] for r in storage.search_orders_by_profile_terms(["a"])}
+        self.assertEqual(rows, {"10": "checkout", "20": "20"})   # falls back to the raw ID only when no name was ever given
+
+    def test_search_rows_keep_their_channel_name_after_deselection(self):
+        """The name is stored on the order row itself, not looked up from the
+        current selection - so it survives the channel later being deselected
+        (unlike discord_selected_channels, which is fully replaced on save)."""
+        storage.record("1", "10", "A (1)", "S", "2026-09-16T10:00:00+00:00", channel_name="checkout")
+        storage.set_selected_channel_ids([])   # 10 is no longer selected
+        rows = storage.search_orders_by_profile_terms(["a"])
+        self.assertEqual(rows[0]["channel_name"], "checkout")
+
+    def test_old_rows_are_backfilled_from_the_selection_remembered_at_that_time(self):
+        """Rows saved before channel_name existed (channel_name is NULL) get
+        backfilled from discord_selected_channels the next time init_db() runs -
+        this is what happens to a real database on the first run after the
+        upgrade, so existing history isn't stuck showing a raw channel ID."""
+        storage.record("1", "10", "A (1)", "S", "2026-09-16T10:00:00+00:00")            # simulates a pre-upgrade row
+        storage.set_selected_channel_ids(["10"], {"10": {"channel_name": "checkout"}})
+        storage.init_db()
+        rows = storage.search_orders_by_profile_terms(["a"])
+        self.assertEqual(rows[0]["channel_name"], "checkout")
+
 
 class AnalysisTests(unittest.TestCase):
     ROWS = [
-        {"profile": "||Co Mary A (1)||", "status": "Successful Checkout!", "message_timestamp": "2026-09-16T10:00:00+00:00"},
-        {"profile": "Co Mary A (1)", "status": "Order Canceled: Item Demand", "message_timestamp": "2026-09-16T11:00:00+00:00"},
-        {"profile": "Kem B (2)", "status": "Successful Checkout!", "message_timestamp": "2026-09-16T12:00:00+00:00"},
+        {"profile": "||Co Mary A (1)||", "status": "Successful Checkout!", "message_timestamp": "2026-09-16T10:00:00+00:00",
+         "channel_id": "10", "channel_name": "checkout"},
+        {"profile": "Co Mary A (1)", "status": "Order Canceled: Item Demand", "message_timestamp": "2026-09-16T11:00:00+00:00",
+         "channel_id": "10", "channel_name": "checkout"},
+        {"profile": "Kem B (2)", "status": "Successful Checkout!", "message_timestamp": "2026-09-16T12:00:00+00:00",
+         "channel_id": "20", "channel_name": "shikari-checkout"},
     ]
 
     def test_group_by_status_cleans_and_dedupes(self):
@@ -155,6 +193,16 @@ class AnalysisTests(unittest.TestCase):
             "Successful Checkout!": ["Co Mary A (1)", "Kem B (2)"],
             "Order Canceled: Item Demand": ["Co Mary A (1)"],
         })
+
+    def test_profile_channels_cleans_and_dedupes(self):
+        self.assertEqual(analysis.profile_channels(self.ROWS), {
+            "Co Mary A (1)": ["checkout"],
+            "Kem B (2)": ["shikari-checkout"],
+        })
+
+    def test_profile_channels_falls_back_to_id_when_name_missing(self):
+        rows = [{"profile": "A", "status": "S", "message_timestamp": "t", "channel_id": "99", "channel_name": None}]
+        self.assertEqual(analysis.profile_channels(rows), {"A": ["99"]})
 
     def test_group_by_profile_counts_and_orders_newest_first(self):
         p = analysis.group_by_profile(self.ROWS)["Co Mary A (1)"]

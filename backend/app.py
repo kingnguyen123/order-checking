@@ -6,6 +6,8 @@ import webbrowser
 from pathlib import Path
 
 from order_analysis.order_analysis import rows_from_csv_text
+from profile_finder.filter import parse_wanted_emails, filter_rows, rows_to_csv_text
+from account_finder.filter import parse_wanted_emails as parse_wanted_account_emails, filter_lines, lines_to_text
 
 # The Jigging Analysis modules (parser, storage, scan, ...) import each other
 # by plain name, so their folder goes on the import path.
@@ -29,6 +31,8 @@ DISCORD_PAGE_FILE = Path(__file__).parent.parent / "frontend" / "discord.html"
 PROJECT_ROOT = Path(__file__).parent.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 FRONTEND_FILE = FRONTEND_DIR / "index.html"
+PROFILE_FINDER_FILE = FRONTEND_DIR / "profile-finder.html"
+ACCOUNT_FINDER_FILE = FRONTEND_DIR / "account-finder.html"
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -47,6 +51,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._serve_page(FRONTEND_FILE)
         elif self.path in ("/discord", "/discord.html"):
             self._serve_page(DISCORD_PAGE_FILE)
+        elif self.path in ("/profile-finder", "/profile-finder.html"):
+            self._serve_page(PROFILE_FINDER_FILE)
+        elif self.path in ("/account-finder", "/account-finder.html"):
+            self._serve_page(ACCOUNT_FINDER_FILE)
         elif self.path == "/api/discord/channels":
             self._handle_discord_channels()
         elif self.path == "/api/discord/search-terms":
@@ -76,6 +84,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._handle_discord_scan_start()
         elif self.path == "/api/discord/profiles/search":
             self._handle_discord_profile_search()
+        elif self.path == "/api/profile-finder/filter":
+            self._handle_profile_finder_filter()
+        elif self.path == "/api/account-finder/filter":
+            self._handle_account_finder_filter()
         else:
             self.send_error(404)
 
@@ -115,11 +127,76 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         "dateRaw": r["date_raw"],
                         "product": r["product"],
                         "retailer": r["retailer"],
+                        "address": r["address"],
                     }
                     for r in rows
                 ],
             })
         self._send_json(200, {"files": results})
+
+    # ---------- Profile Finder ----------
+
+    def _handle_profile_finder_filter(self):
+        """POST {csvText, emails} - split a pasted CSV's rows into the ones
+        whose email column matches the given list ("matches") and everything
+        else ("rest"). Same filter.py code the command-line script uses, so
+        results always match."""
+        payload = self._read_json()
+        if payload is None:
+            return
+        wanted = parse_wanted_emails(payload.get("emails") or "")
+        if not wanted:
+            self._send_json(400, {"error": "No emails given"})
+            return
+        try:
+            fieldnames, matched_rows, rest_rows, seen_counts = filter_rows(payload.get("csvText") or "", wanted)
+        except ValueError as e:
+            self._send_json(400, {"error": str(e)})
+            return
+
+        not_found = [original for key, original in wanted.items() if key not in seen_counts]
+        duplicated = [{"email": wanted[key], "count": count} for key, count in seen_counts.items() if count > 1]
+        self._send_json(200, {
+            "fieldnames": fieldnames,
+            "rows": matched_rows,
+            "emailCount": len(wanted),
+            "foundCount": len(wanted) - len(not_found),
+            "notFound": not_found,
+            "duplicated": duplicated,
+            "matchedCsvText": rows_to_csv_text(fieldnames, matched_rows),
+            "restCsvText": rows_to_csv_text(fieldnames, rest_rows),
+            "restCount": len(rest_rows),
+        })
+
+    # ---------- Account Finder ----------
+
+    def _handle_account_finder_filter(self):
+        """POST {accountsText, emails} - split a pasted "email:password" list
+        into the lines whose email matches the given list ("matches") and
+        everything else ("rest"). Same filter.py code the command-line
+        script uses, so results always match. Lines are copied through
+        unchanged - passwords are never parsed or reformatted."""
+        payload = self._read_json()
+        if payload is None:
+            return
+        wanted = parse_wanted_account_emails(payload.get("emails") or "")
+        if not wanted:
+            self._send_json(400, {"error": "No emails given"})
+            return
+        matched_lines, rest_lines, seen_counts = filter_lines(payload.get("accountsText") or "", wanted)
+
+        not_found = [original for key, original in wanted.items() if key not in seen_counts]
+        duplicated = [{"email": wanted[key], "count": count} for key, count in seen_counts.items() if count > 1]
+        self._send_json(200, {
+            "matchedCount": len(matched_lines),
+            "restCount": len(rest_lines),
+            "emailCount": len(wanted),
+            "foundCount": len(wanted) - len(not_found),
+            "notFound": not_found,
+            "duplicated": duplicated,
+            "matchedText": lines_to_text(matched_lines),
+            "restText": lines_to_text(rest_lines),
+        })
 
     # ---------- Jigging Analysis (Discord) ----------
 
@@ -214,9 +291,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(200, {
                 "byStatus": analysis.group_by_status(rows),
                 "byProfile": analysis.group_by_profile(rows),
+                "byProfileChannels": analysis.profile_channels(rows),
             })
         except Exception as e:
-            self._send_json(200, {"error": str(e), "byStatus": {}, "byProfile": {}})
+            self._send_json(200, {"error": str(e), "byStatus": {}, "byProfile": {}, "byProfileChannels": {}})
             return
         try:
             storage.set_search_terms(names)     # remembered for next time; never worth failing a search over

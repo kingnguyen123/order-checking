@@ -118,7 +118,7 @@ async def on_message(message):
         result = parse(message, own_id=client.user.id if client.user else None)
         if result:
             profile, status = result
-            storage.record(message.id, message.channel.id, profile, status, message.created_at.isoformat())
+            storage.record(message.id, message.channel.id, profile, status, message.created_at.isoformat(), channel_name=message.channel.name)
             print(f"Discord: new order - Profile: {profile} | Status: {status}")
     except Exception as e:
         print(f"Discord: ignoring a message that couldn't be processed ({e}).")

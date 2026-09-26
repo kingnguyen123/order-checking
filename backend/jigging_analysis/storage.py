@@ -53,6 +53,13 @@ def init_db():
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         """)
+        try:
+            # Added later, for a per-order "which channel" filter. Stored on
+            # the row itself (not looked up from discord_selected_channels)
+            # so a channel keeps its name even after being deselected.
+            conn.execute("ALTER TABLE discord_orders ADD COLUMN channel_name TEXT")
+        except sqlite3.OperationalError:
+            pass  # already has the column
         conn.execute("""
             CREATE TABLE IF NOT EXISTS discord_selected_channels (
                 channel_id TEXT PRIMARY KEY,
@@ -76,6 +83,17 @@ def init_db():
                 (", ".join(DEFAULT_SEARCH_TERMS),),
             )
             conn.commit()
+        # One-time (per row) backfill: rows saved before channel_name existed
+        # get it from whatever name was remembered for their channel, so
+        # existing history isn't stuck showing a raw channel ID.
+        conn.execute("""
+            UPDATE discord_orders
+            SET channel_name = (SELECT channel_name FROM discord_selected_channels
+                                 WHERE channel_id = discord_orders.discord_channel_id)
+            WHERE channel_name IS NULL
+              AND discord_channel_id IN (SELECT channel_id FROM discord_selected_channels)
+        """)
+        conn.commit()
 
 
 def get_selected_channel_ids():
@@ -141,17 +159,25 @@ def set_search_terms(terms):
 def search_orders_by_profile_terms(terms, after=None, before=None):
     """Matches any stored order whose profile contains any of the given
     terms (case-insensitive, partial match) - so multiple profile names
-    can be searched for at once. `after`/`before` are optional ISO-8601
+    can be searched for at once. An empty/blank terms list means "no
+    profile name given" - match every profile instead of none, still
+    honoring the date range. `after`/`before` are optional ISO-8601
     timestamp strings (same format message_timestamp is stored in) that
     narrow the match to that date range - both open-ended if omitted, so
     old callers/behavior are unaffected. Returns raw rows:
-    [{"profile", "status", "message_timestamp"}, ...]"""
+    [{"profile", "status", "message_timestamp", "channel_id", "channel_name"}, ...]
+    channel_name is whatever name was recorded for that channel at scan/live-
+    monitoring time, so it stays correct even after the channel is later
+    deselected or renamed - it only falls back to the raw ID for the rare
+    row saved before that channel was ever named (see init_db's backfill)."""
     terms = [t.strip() for t in (terms or []) if t and t.strip()]
-    if not terms:
-        return []
-    clauses = " OR ".join(["lower(profile) LIKE ?"] * len(terms))
-    params = [f"%{t.lower()}%" for t in terms]
-    where = f"({clauses})"
+    params = []
+    if terms:
+        clauses = " OR ".join(["lower(profile) LIKE ?"] * len(terms))
+        params.extend(f"%{t.lower()}%" for t in terms)
+        where = f"({clauses})"
+    else:
+        where = "1=1"
     if after:
         where += " AND message_timestamp >= ?"
         params.append(after)
@@ -161,22 +187,24 @@ def search_orders_by_profile_terms(terms, after=None, before=None):
     with _connect() as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
-            f"SELECT profile, status, message_timestamp FROM discord_orders WHERE {where}"
-            f" ORDER BY message_timestamp DESC",
+            "SELECT profile, status, message_timestamp, discord_channel_id AS channel_id, "
+            "COALESCE(channel_name, discord_channel_id) AS channel_name "
+            f"FROM discord_orders WHERE {where} ORDER BY message_timestamp DESC",
             params,
         ).fetchall()
     return [dict(r) for r in rows]
 
 
-def record(message_id, channel_id, profile, status, message_timestamp):
+def record(message_id, channel_id, profile, status, message_timestamp, channel_name=None):
     """Returns True if a new record was inserted, False if that message ID
-    was already stored (safe to call repeatedly - e.g. re-running a scan)."""
+    was already stored (safe to call repeatedly - e.g. re-running a scan).
+    channel_name is stored on the row itself (see search_orders_by_profile_terms)."""
     with _connect() as conn:
         cur = conn.execute(
             "INSERT OR IGNORE INTO discord_orders "
-            "(discord_message_id, discord_channel_id, profile, status, message_timestamp) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (str(message_id), str(channel_id), profile, status, message_timestamp),
+            "(discord_message_id, discord_channel_id, profile, status, message_timestamp, channel_name) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (str(message_id), str(channel_id), profile, status, message_timestamp, channel_name),
         )
         conn.commit()
         return cur.rowcount > 0

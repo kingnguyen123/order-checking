@@ -30,6 +30,34 @@ def find_col(fieldnames, *candidates):
     return None
 
 
+def normalize_product(raw):
+    """Drops a leading "Category: " prefix some exports include, e.g.
+    "Pokemon Trading Card Game: 30th Celebration Poster Collection" ->
+    "30th Celebration Poster Collection". Left as-is if there's no colon."""
+    raw = (raw or "").strip()
+    if ":" in raw:
+        return raw.split(":", 1)[1].strip()
+    return raw
+
+
+def normalize_address(raw):
+    """The Address column holds "Name, Street, City, State Zip" as one
+    comma-separated value. Only the street part is useful here - Name,
+    City, State and Zip are all dropped, e.g. "Mary Davis, 3146 N Wild
+    Rose St Rm 43, Wichita, KS 67226" -> "3146 N Wild Rose St Rm 43"."""
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    parts = [p.strip() for p in raw.split(",")]
+    if len(parts) >= 4:
+        parts = parts[1:-2]   # drop Name, City, State Zip - keep the street
+    elif len(parts) == 3:
+        parts = parts[1:-1]   # Name, Street, "City State Zip" combined
+    elif len(parts) == 2:
+        parts = parts[1:]     # Name, Street (no city/state/zip present)
+    return ", ".join(p for p in parts if p)
+
+
 def date_key(date_str):
     """Sortable/comparable string key for a date. ISO dates pass through
     as-is (they already sort correctly as text); other recognized formats
@@ -102,9 +130,10 @@ def _good_account(orders):
 
 def rows_from_csv_text(name, text):
     """Parse one CSV file's text into row dicts using its Status, Source
-    Email, Date, Product, and Retailer columns (case-insensitive; Date,
-    Product and Retailer are optional). Returns (rows, warning) - warning
-    is None on success, or a short reason the file was skipped."""
+    Email, Date, Product, Retailer, and Address columns (case-insensitive;
+    everything but Status and Source Email is optional). Returns
+    (rows, warning) - warning is None on success, or a short reason the
+    file was skipped."""
     reader = csv.DictReader(io.StringIO(text))
     if not reader.fieldnames:
         return [], "Empty file"
@@ -114,6 +143,7 @@ def rows_from_csv_text(name, text):
     date_col = find_col(reader.fieldnames, "date")
     product_col = find_col(reader.fieldnames, "product")
     retailer_col = find_col(reader.fieldnames, "retailer")
+    address_col = find_col(reader.fieldnames, "address", "shipping address")
 
     if not status_col or not email_col:
         return [], "Missing Status and/or Source Email column"
@@ -130,8 +160,9 @@ def rows_from_csv_text(name, text):
             "status": status_raw.lower(),
             "status_raw": status_raw,
             "date_raw": (row.get(date_col) or "").strip() if date_col else "",
-            "product": (row.get(product_col) or "").strip() if product_col else "",
+            "product": normalize_product(row.get(product_col)) if product_col else "",
             "retailer": (row.get(retailer_col) or "").strip() if retailer_col else "",
+            "address": normalize_address(row.get(address_col)) if address_col else "",
         })
     return rows, None
 
@@ -162,11 +193,13 @@ def aggregate(rows):
     for r in rows:
         rec = by_email.setdefault(r["email"], {
             "email": r["email"], "orders": [], "success_count": 0, "cancel_count": 0,
-            "success_products": {}, "cancel_products": {}, "retailers": {},
+            "success_products": {}, "cancel_products": {}, "retailers": {}, "addresses": {},
         })
         rec["orders"].append(r)
         if r["retailer"]:
             rec["retailers"][r["retailer"]] = True
+        if r["address"]:
+            rec["addresses"][r["address"]] = True
         if r["status"] in SUCCESS_STATUSES:
             rec["success_count"] += 1
             if r["product"]:
@@ -197,6 +230,7 @@ def aggregate(rows):
             "success_products": list(rec["success_products"].keys()),
             "cancel_products": list(rec["cancel_products"].keys()),
             "retailers": list(rec["retailers"].keys()),
+            "addresses": list(rec["addresses"].keys()),
             "good_account": is_good,
             "good_reasons": good_reasons,
         })

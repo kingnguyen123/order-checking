@@ -84,7 +84,7 @@
     * { transition: none !important; animation: none !important; }
   }
 
-  .app-shell { max-width: 1100px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+  .app-shell { width: calc(100vw - 40px); max-width: 2000px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
 
   .page-nav { display: flex; gap: 8px; }
   .page-nav-link {
@@ -544,15 +544,19 @@
     var s28 = useState([]); var lastSearchTerms = s28[0], setLastSearchTerms = s28[1];
     var s29 = useState(""); var searchPhase = s29[0], setSearchPhase = s29[1];
     var s30 = useState(""); var searchNote = s30[0], setSearchNote = s30[1];
+    var s31 = useState(new Set()); var channelFilter = s31[0], setChannelFilter = s31[1];
+    var s32 = useState(false); var channelFilterOpen = s32[0], setChannelFilterOpen = s32[1];
     var toastTimers = React.useRef([]);
     var copyTimers = React.useRef({});
     var statusFilterRef = React.useRef(null);
     var categoryFilterRef = React.useRef(null);
+    var channelFilterRef = React.useRef(null);
 
     useEffect(function () {
       function handleClickOutside(e) {
         if (statusFilterRef.current && !statusFilterRef.current.contains(e.target)) setStatusFilterOpen(false);
         if (categoryFilterRef.current && !categoryFilterRef.current.contains(e.target)) setCategoryFilterOpen(false);
+        if (channelFilterRef.current && !channelFilterRef.current.contains(e.target)) setChannelFilterOpen(false);
       }
       document.addEventListener("mousedown", handleClickOutside);
       return function () { document.removeEventListener("mousedown", handleClickOutside); };
@@ -693,8 +697,9 @@
     // Search = scan the selected channels for the chosen date range (only
     // what's new when no range is set), then search what's stored.
     function runSearch() {
+      // An empty list here means "no profile name given" - the backend
+      // treats that as search everything, not search nothing.
       var names = searchInput.split(/[,\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
-      if (!names.length) return;
       if (searchAfter && searchBefore && searchAfter > searchBefore) {
         setSearchDateError("'From' date must be before 'To' date.");
         return;
@@ -726,6 +731,11 @@
           setStatusFilter(new Set(statuses));
           setLastSearchTerms(names);
           setCategoryFilter(new Set(names));
+          var channels = new Set();
+          Object.values((json && json.byProfileChannels) || {}).forEach(function (chs) {
+            chs.forEach(function (c) { channels.add(c); });
+          });
+          setChannelFilter(channels);
         })
         .catch(function () { setSearchResults({ error: "Search failed - is Account Analysis still running?" }); })
         .finally(function () { setSearching(false); setSearchPhase(""); });
@@ -751,6 +761,20 @@
       setCategoryFilter(function (prev) {
         var next = new Set(prev);
         if (next.has(term)) next.delete(term); else next.add(term);
+        return next;
+      });
+    }
+
+    // Which channel(s) a profile's orders came from - real stored data (not
+    // guessed from the name), so it filters correctly even across servers.
+    function profileChannels(profile) {
+      return (searchResults && searchResults.byProfileChannels && searchResults.byProfileChannels[profile]) || [];
+    }
+
+    function toggleChannelFilter(channel) {
+      setChannelFilter(function (prev) {
+        var next = new Set(prev);
+        if (next.has(channel)) next.delete(channel); else next.add(channel);
         return next;
       });
     }
@@ -805,8 +829,24 @@
       return out;
     }, [searchResults, lastSearchTerms]);
 
+    var channelCounts = useMemo(function () {
+      var counts = {};
+      if (searchResults && !searchResults.error && searchResults.byProfileChannels) {
+        Object.keys(searchResults.byProfileChannels).forEach(function (profile) {
+          searchResults.byProfileChannels[profile].forEach(function (ch) {
+            counts[ch] = counts[ch] || new Set();
+            counts[ch].add(profile);
+          });
+        });
+      }
+      var out = {};
+      Object.keys(counts).forEach(function (ch) { out[ch] = counts[ch].size; });
+      return out;
+    }, [searchResults]);
+    var allChannels = useMemo(function () { return Object.keys(channelCounts).sort(); }, [channelCounts]);
+
     // category -> jig name -> status -> count, scoped to whatever's
-    // currently checked in both filter dropdowns so it always matches
+    // currently checked in all three filter dropdowns so it always matches
     // what's shown in the detailed groups below.
     var jigBreakdown = useMemo(function () {
       var result = {};
@@ -814,6 +854,7 @@
       Object.keys(searchResults.byStatus).forEach(function (status) {
         if (!statusFilter.has(status)) return;
         searchResults.byStatus[status].forEach(function (profile) {
+          if (!profileChannels(profile).some(function (ch) { return channelFilter.has(ch); })) return;
           profileCategories(profile).forEach(function (category) {
             if (!categoryFilter.has(category)) return;
             var jig = extractJigName(profile, category);
@@ -824,12 +865,14 @@
         });
       });
       return result;
-    }, [searchResults, statusFilter, categoryFilter, lastSearchTerms]);
+    }, [searchResults, statusFilter, categoryFilter, channelFilter, lastSearchTerms]);
 
     return h("div", { className: "app-shell" },
       h("nav", { className: "page-nav" },
         h("a", { className: "page-nav-link", href: "/" }, "Account Analysis"),
-        h("a", { className: "page-nav-link page-nav-active", href: "/discord.html" }, "Jigging Analysis")
+        h("a", { className: "page-nav-link page-nav-active", href: "/discord.html" }, "Jigging Analysis"),
+        h("a", { className: "page-nav-link", href: "/profile-finder.html" }, "Profile Finder"),
+        h("a", { className: "page-nav-link", href: "/account-finder.html" }, "Account Finder")
       ),
       h("header", { className: "topbar" },
         h("div", { className: "brand" },
@@ -863,14 +906,14 @@
             h("h2", { className: "sidebar-title" }, "Search Profiles"),
             h("div", { className: "search-row" },
               h("input", {
-                type: "text", className: "search-input-inline", placeholder: "Co Mary, John Smith",
+                type: "text", className: "search-input-inline", placeholder: "Co Mary, John Smith (leave blank for all)",
                 value: searchInput,
                 onChange: function (e) { setSearchInput(e.target.value); },
                 onKeyDown: function (e) { if (e.key === "Enter") runSearch(); },
               }),
-              h("button", { className: "btn btn-primary", onClick: runSearch, disabled: searching || !searchInput.trim() }, searchPhase === "scanning" ? "Scanning…" : searching ? "…" : "Search")
+              h("button", { className: "btn btn-primary", onClick: runSearch, disabled: searching }, searchPhase === "scanning" ? "Scanning…" : searching ? "…" : "Search")
             ),
-            h("p", { className: "panel-hint", style: { margin: 0 } }, "Comma-separated, partial names OK. Search fetches new Discord messages for the date range first."),
+            h("p", { className: "panel-hint", style: { margin: 0 } }, "Comma-separated, partial names OK. Leave blank to search every profile. Search fetches new Discord messages for the date range first."),
             searchNote ? h("p", { className: "muted small", style: { margin: 0 } }, searchNote) : null,
             h("button", {
               className: "btn dropdown-trigger", type: "button",
@@ -956,7 +999,7 @@
                         })
                       ) : null
                     ),
-                    h("div", { className: "result-filter", ref: categoryFilterRef },
+                    lastSearchTerms.length > 0 ? h("div", { className: "result-filter", ref: categoryFilterRef },
                       h("button", {
                         className: "btn dropdown-trigger", type: "button",
                         onClick: function () { setCategoryFilterOpen(!categoryFilterOpen); },
@@ -973,6 +1016,27 @@
                           return h("label", { className: "filter-option", key: term },
                             h("input", { type: "checkbox", checked: categoryFilter.has(term), onChange: function () { toggleCategoryFilter(term); } }),
                             term + " (" + (categoryCounts[term] || 0) + ")"
+                          );
+                        })
+                      ) : null
+                    ) : null,
+                    h("div", { className: "result-filter", ref: channelFilterRef },
+                      h("button", {
+                        className: "btn dropdown-trigger", type: "button",
+                        onClick: function () { setChannelFilterOpen(!channelFilterOpen); },
+                      },
+                        channelFilter.size + " of " + allChannels.length + " channels",
+                        h("span", { className: "chevron" + (channelFilterOpen ? " chevron-open" : "") }, "▾")
+                      ),
+                      channelFilterOpen ? h("div", { className: "dropdown-panel scroll-box" },
+                        h("div", { className: "selector-actions" },
+                          h("button", { className: "btn btn-ghost", onClick: function () { setChannelFilter(new Set(allChannels)); } }, "Select All"),
+                          h("button", { className: "btn btn-ghost", onClick: function () { setChannelFilter(new Set()); } }, "Clear All")
+                        ),
+                        allChannels.map(function (channelName) {
+                          return h("label", { className: "filter-option", key: channelName },
+                            h("input", { type: "checkbox", checked: channelFilter.has(channelName), onChange: function () { toggleChannelFilter(channelName); } }),
+                            "#" + channelName + " (" + (channelCounts[channelName] || 0) + ")"
                           );
                         })
                       ) : null
@@ -1006,7 +1070,11 @@
                   h("div", { className: "scan-progress" },
                     Object.keys(searchResults.byStatus).filter(function (status) { return statusFilter.has(status); }).map(function (status) {
                       var profiles = searchResults.byStatus[status].filter(function (p) {
-                        return profileCategories(p).some(function (term) { return categoryFilter.has(term); });
+                        // No search keywords (search-all) means there are no
+                        // categories to filter by - every profile passes.
+                        var matchesCategory = lastSearchTerms.length === 0 ||
+                          profileCategories(p).some(function (term) { return categoryFilter.has(term); });
+                        return matchesCategory && profileChannels(p).some(function (ch) { return channelFilter.has(ch); });
                       });
                       if (!profiles.length) return null;
                       var colorKey = statusColorKey(status) || "neutral";

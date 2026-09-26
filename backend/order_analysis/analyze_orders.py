@@ -95,7 +95,7 @@ def main():
         writer.writerow([
             "Source Email", "Success Count", "Cancelled Count",
             "Success Dates", "Cancelled Dates",
-            "Success Products", "Cancelled Products", "Retailers",
+            "Success Products", "Cancelled Products", "Retailers", "Addresses",
             "Good Account", "Good Account Reason",
         ])
         for email in sorted(records_by_email):
@@ -111,6 +111,7 @@ def main():
                 products_str(rec["success_products"]),
                 products_str(rec["cancel_products"]),
                 products_str(rec["retailers"]),
+                products_str(rec["addresses"]),
                 "Yes" if rec["good_account"] else "No",
                 "; ".join(rec["good_reasons"]),
             ])
@@ -118,9 +119,9 @@ def main():
     rows_sorted = sorted(rows, key=lambda r: (r["email"], r["date_raw"]))
     with detail_output.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["Date", "Status", "Source Email", "Retailer", "Product", "Account Age"])
+        writer.writerow(["Date", "Status", "Source Email", "Retailer", "Product", "Address", "Account Age"])
         for r in rows_sorted:
-            writer.writerow([r["date_raw"], r["status"], r["email"], r["retailer"], r["product"], r["account_age"]])
+            writer.writerow([r["date_raw"], r["status"], r["email"], r["retailer"], r["product"], r["address"], r["account_age"]])
 
     print(f"\nPer-email summary written to {summary_output}")
     print(f"Per-order detail (with Account Age) written to {detail_output}")

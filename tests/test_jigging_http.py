@@ -136,13 +136,14 @@ class HttpTests(unittest.TestCase):
 
     def test_search_filters_by_the_users_day_and_remembers_keywords(self):
         start, end = dates.day_bound("2026-09-16"), dates.day_bound("2026-09-16", end_of_day=True)
-        storage.record("s1", "10", "||Co Mary A (1)||", "Successful Checkout!", dates.to_utc_iso(start.replace(hour=1)))
-        storage.record("s2", "10", "Co Mary B (2)", "Order Canceled: Item Demand", dates.to_utc_iso(end.replace(hour=0) - (end - start) / 2))
+        storage.record("s1", "10", "||Co Mary A (1)||", "Successful Checkout!", dates.to_utc_iso(start.replace(hour=1)), channel_name="checkout")
+        storage.record("s2", "10", "Co Mary B (2)", "Order Canceled: Item Demand", dates.to_utc_iso(end.replace(hour=0) - (end - start) / 2), channel_name="checkout")
         storage.record("s3", "10", "Co Mary OLD (9)", "Successful Checkout!", dates.to_utc_iso(start - (end - start)))   # the day before
 
         status, data = self.json("/api/discord/profiles/search", {"names": ["co mary"], "after": "2026-09-16", "before": "2026-09-16"})
         self.assertEqual(status, 200)
         self.assertEqual(data["byStatus"], {"Successful Checkout!": ["Co Mary A (1)"], "Order Canceled: Item Demand": ["Co Mary B (2)"]})
+        self.assertEqual(data["byProfileChannels"], {"Co Mary A (1)": ["checkout"], "Co Mary B (2)": ["checkout"]})
 
         everything = self.json("/api/discord/profiles/search", {"names": ["co mary"]})[1]
         self.assertIn("Co Mary OLD (9)", everything["byStatus"]["Successful Checkout!"])

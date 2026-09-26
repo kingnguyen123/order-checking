@@ -31,6 +31,17 @@ def group_by_status(rows):
     return {status: sorted(profiles) for status, profiles in by_status.items()}
 
 
+def profile_channels(rows):
+    """{profile: [channel_name, ...]} (sorted, deduplicated) - which
+    channel(s) each profile's orders came from, for filtering results by
+    channel the same way the keyword filter works (a profile matches if any
+    of its channels is selected)."""
+    by_profile = {}
+    for r in rows:
+        by_profile.setdefault(_clean_profile(r["profile"]), set()).add(r.get("channel_name") or r.get("channel_id") or "")
+    return {profile: sorted(c for c in channels if c) for profile, channels in by_profile.items()}
+
+
 def group_by_profile(rows):
     """{profile: {"total": N, "statuses": {status: count}, "history": [...]}}
     - the per-profile view, newest order first."""

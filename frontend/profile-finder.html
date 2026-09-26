@@ -1,0 +1,395 @@
+<title>Profile Finder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --paper: #eef0ec;
+    --surface: #ffffff;
+    --surface-2: #f5f4ef;
+    --ink: #1b2430;
+    --ink-muted: #5c6672;
+    --border: #d8d9d0;
+    --accent: #2c3e6b;
+    --accent-contrast: #ffffff;
+    --accent-soft: #e4e8f3;
+    --stamp-success: #1f7a4d;
+    --stamp-success-bg: #e3f3e9;
+    --stamp-cancel: #b23b2e;
+    --stamp-cancel-bg: #f7e6e3;
+    --font-display: 'Zilla Slab', Georgia, 'Times New Roman', serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Consolas', 'SFMono-Regular', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #11161d; --surface: #171e28; --surface-2: #1d2530; --ink: #e7e6e1; --ink-muted: #96a0ab;
+      --border: #2b3542; --accent: #91a5e0; --accent-contrast: #11161d; --accent-soft: #232c42;
+      --stamp-success: #52c98a; --stamp-success-bg: #163826; --stamp-cancel: #f1806a; --stamp-cancel-bg: #3c2019;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #11161d; --surface: #171e28; --surface-2: #1d2530; --ink: #e7e6e1; --ink-muted: #96a0ab;
+    --border: #2b3542; --accent: #91a5e0; --accent-contrast: #11161d; --accent-soft: #232c42;
+    --stamp-success: #52c98a; --stamp-success-bg: #163826; --stamp-cancel: #f1806a; --stamp-cancel-bg: #3c2019;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); padding-inline: 20px; padding-block: 28px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  .app-shell { width: calc(100vw - 40px); max-width: 2400px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+
+  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .scroll-box::-webkit-scrollbar { width: 11px; height: 11px; }
+  .scroll-box::-webkit-scrollbar-track { background: transparent; }
+  .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
+  .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
+
+  .page-nav { display: flex; gap: 8px; }
+  .page-nav-link {
+    font-family: var(--font-body); font-weight: 600; font-size: 13px;
+    padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--ink-muted); text-decoration: none;
+  }
+  .page-nav-link:hover { border-color: var(--accent); color: var(--ink); }
+  .page-nav-active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+
+  .topbar { padding-block: 2px 4px; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand-mark {
+    font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    border: 2px solid var(--accent); color: var(--accent); border-radius: 4px;
+    width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transform: rotate(-3deg); letter-spacing: 0.02em;
+  }
+  .brand-title { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin: 0 0 2px; text-wrap: balance; }
+  .brand-tag { margin: 0; color: var(--ink-muted); font-size: 13.5px; max-width: 62ch; }
+
+  .workspace { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } .intake { position: static !important; } }
+
+  .panel-title { font-family: var(--font-display); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin: 0 0 6px; }
+  .panel-hint { font-size: 12.5px; color: var(--ink-muted); margin: 0 0 14px; line-height: 1.5; }
+
+  .intake { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
+  .intake-section { display: flex; flex-direction: column; gap: 8px; }
+  .intake-section + .intake-section { padding-top: 14px; border-top: 1px solid var(--border); }
+
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 8px; padding: 22px 14px;
+    text-align: center; cursor: pointer; color: var(--ink-muted);
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+  }
+  .dropzone svg { color: var(--ink-muted); transition: color .15s ease; }
+  .dropzone:hover, .dropzone-active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+  .dropzone:hover svg, .dropzone-active svg { color: var(--accent); }
+  .dropzone-title { margin: 8px 0 2px; font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+  .dropzone-sub { margin: 0; font-size: 12px; }
+
+  .file-row { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+  .file-row-main { display: flex; align-items: center; gap: 8px; }
+  .file-name { flex: 1; font-family: var(--font-mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .icon-btn { background: none; border: none; color: var(--ink-muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 4px; }
+  .icon-btn:hover { color: var(--stamp-cancel); background: var(--surface); }
+
+  .email-textarea {
+    width: 100%; min-height: 130px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5;
+  }
+  .email-count { font-size: 12px; color: var(--ink-muted); }
+
+  .muted { color: var(--ink-muted); }
+  .small { font-size: 12px; }
+
+  .btn { font-family: var(--font-body); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn-ghost { background: transparent; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .intake-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  .analysis { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 4px; }
+  @media (max-width: 700px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
+  .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; }
+  .stat-value { font-family: var(--font-display); font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .stat-found .stat-value { color: var(--stamp-success); }
+  .stat-missing .stat-value { color: var(--stamp-cancel); }
+
+  .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin: 14px 0; }
+  .toolbar-export { display: flex; align-items: center; gap: 10px; }
+  .export-status { font-size: 12px; color: var(--ink-muted); }
+
+  .notice { border-radius: 6px; padding: 10px 12px; margin: 0 0 14px; font-size: 12.5px; }
+  .notice-bad { background: var(--stamp-cancel-bg); border: 1px solid var(--stamp-cancel); color: var(--stamp-cancel); }
+  .notice-title { font-weight: 600; margin: 0 0 4px; }
+  .notice-list { font-family: var(--font-mono); font-size: 12px; word-break: break-all; margin: 0; }
+
+  .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); max-height: 62vh; }
+  .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ledger-table thead th {
+    position: sticky; top: 0; z-index: 1; text-align: left; padding: 10px 12px; background: var(--surface-2);
+    border-bottom: 1px solid var(--border); font-weight: 600; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-muted); white-space: nowrap;
+  }
+  .data-row { border-bottom: 1px solid var(--border); }
+  .data-row:hover { background: var(--surface-2); }
+  .data-row td { padding: 9px 12px; vertical-align: top; font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+
+  .empty-state { padding: 40px 20px; text-align: center; color: var(--ink-muted); border: 1px dashed var(--border); border-radius: 8px; background: var(--surface); }
+  .footer-note { text-align: center; font-size: 12px; color: var(--ink-muted); padding-block: 6px 2px; }
+</style>
+
+<div id="root"></div>
+<noscript>This page needs JavaScript enabled.</noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var useState = React.useState, useMemo = React.useMemo, useRef = React.useRef;
+  var h = React.createElement;
+
+  function csvEscape(v) {
+    var s = v === null || v === undefined ? "" : String(v);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function splitEmails(text) {
+    return (text || "").split(/[\n,;]+/).map(function (e) { return e.trim(); }).filter(Boolean);
+  }
+
+  function UploadIcon() {
+    return h("svg", { viewBox: "0 0 24 24", width: 26, height: 26, "aria-hidden": "true" },
+      h("path", {
+        d: "M12 3v10m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3",
+        stroke: "currentColor", strokeWidth: "1.6", fill: "none", strokeLinecap: "round", strokeLinejoin: "round",
+      })
+    );
+  }
+
+  function StatTile(props) {
+    return h("div", { className: "stat-tile" + (props.tone ? " stat-" + props.tone : "") },
+      h("div", { className: "stat-value" }, props.value),
+      h("div", { className: "stat-label" }, props.label)
+    );
+  }
+
+  function IntakePanel(props) {
+    return h("aside", { className: "intake" },
+      h("div", { className: "intake-section" },
+        h("h2", { className: "panel-title" }, "1. Profile CSV"),
+        h("p", { className: "panel-hint" }, "One CSV export with an Email Address column and all the profile columns you want kept."),
+        props.fileName ? h("div", { className: "file-row" },
+          h("div", { className: "file-row-main" },
+            h("span", { className: "file-name" }, props.fileName),
+            h("button", { className: "icon-btn", onClick: props.onRemoveFile, "aria-label": "Remove file" }, "×")
+          )
+        ) : h("div", {
+          className: "dropzone" + (props.isDragging ? " dropzone-active" : ""),
+          onDragOver: props.onDragOver, onDragLeave: props.onDragLeave, onDrop: props.onDrop,
+          onClick: props.onBrowseClick, role: "button", tabIndex: 0,
+          onKeyDown: function (e) { if (e.key === "Enter" || e.key === " ") props.onBrowseClick(); },
+        },
+          h(UploadIcon, null),
+          h("p", { className: "dropzone-title" }, "Drag a CSV file here"),
+          h("p", { className: "dropzone-sub" }, "or click to browse"),
+          h("input", {
+            ref: props.fileInputRef, type: "file", accept: ".csv,text/csv",
+            style: { display: "none" }, onChange: props.onFileInputChange,
+          })
+        )
+      ),
+      h("div", { className: "intake-section" },
+        h("h2", { className: "panel-title" }, "2. Emails to find"),
+        h("p", { className: "panel-hint" }, "Paste the list of emails, one per line (commas also work)."),
+        h("textarea", {
+          className: "email-textarea", value: props.emailsText, spellCheck: false,
+          placeholder: "a@example.com\nb@example.com\n...",
+          onChange: function (e) { props.onEmailsTextChange(e.target.value); },
+        }),
+        h("div", { className: "email-count" }, props.emailCount + " email" + (props.emailCount === 1 ? "" : "s") + " listed")
+      ),
+      h("div", { className: "intake-actions" },
+        h("button", { className: "btn btn-ghost", onClick: props.onClearAll }, "Clear all"),
+        h("button", { className: "btn btn-primary", onClick: props.onFilter, disabled: props.filterDisabled }, props.filtering ? "Filtering…" : "Filter")
+      )
+    );
+  }
+
+  function ResultsTable(props) {
+    if (!props.headers.length) {
+      return h("div", { className: "empty-state" }, "Load a profile CSV, paste the emails to look for, then click Filter.");
+    }
+    if (!props.rows.length) {
+      return h("div", { className: "empty-state" }, "No rows matched those emails.");
+    }
+    return h("div", { className: "table-wrap scroll-box" },
+      h("table", { className: "ledger-table" },
+        h("thead", null, h("tr", null, props.headers.map(function (hd) { return h("th", { key: hd }, hd); }))),
+        h("tbody", null,
+          props.rows.map(function (r, i) {
+            return h("tr", { className: "data-row", key: i },
+              props.headers.map(function (hd) { return h("td", { key: hd }, r[hd] || ""); })
+            );
+          })
+        )
+      )
+    );
+  }
+
+  function App() {
+    var s1 = useState(null); var file = s1[0], setFile = s1[1];        // {name, text}
+    var s2 = useState(false); var isDragging = s2[0], setIsDragging = s2[1];
+    var s3 = useState(""); var emailsText = s3[0], setEmailsText = s3[1];
+    var s4 = useState(""); var exportStatus = s4[0], setExportStatus = s4[1];
+    var s5 = useState(false); var filtering = s5[0], setFiltering = s5[1];
+    var s6 = useState(null); var result = s6[0], setResult = s6[1];    // API response, or null before the first filter
+    var s7 = useState(""); var errorMsg = s7[0], setErrorMsg = s7[1];
+    var fileInputRef = useRef(null);
+
+    var emailCount = useMemo(function () { return splitEmails(emailsText).length; }, [emailsText]);
+
+    function loadFile(f) {
+      var reader = new FileReader();
+      reader.onload = function () { setFile({ name: f.name, text: String(reader.result || "") }); setResult(null); setErrorMsg(""); };
+      reader.onerror = function () { setErrorMsg("Could not read " + f.name + "."); };
+      reader.readAsText(f);
+    }
+
+    function onDrop(e) {
+      e.preventDefault(); setIsDragging(false);
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f && /\.csv$/i.test(f.name)) loadFile(f);
+    }
+    function onDragOver(e) { e.preventDefault(); setIsDragging(true); }
+    function onDragLeave(e) { e.preventDefault(); setIsDragging(false); }
+    function onBrowseClick() { if (fileInputRef.current) fileInputRef.current.click(); }
+    function onFileInputChange(e) { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ""; }
+    function onRemoveFile() { setFile(null); setResult(null); }
+    function onClearAll() { setFile(null); setEmailsText(""); setResult(null); setErrorMsg(""); }
+
+    function onFilter() {
+      if (!file || !emailCount) return;
+      setFiltering(true); setErrorMsg(""); setResult(null);
+      fetch("/api/profile-finder/filter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csvText: file.text, emails: emailsText }),
+      }).then(function (resp) {
+        return resp.json().then(function (data) { return { ok: resp.ok, data: data }; });
+      }).then(function (res) {
+        setFiltering(false);
+        if (!res.ok) { setErrorMsg(res.data.error || "Filtering failed."); return; }
+        setResult(res.data);
+      }).catch(function () {
+        setFiltering(false);
+        setErrorMsg("Could not reach the backend. Make sure app.py is running.");
+      });
+    }
+
+    function downloadCsv(csvText, filename) {
+      if (!csvText) return;
+      setExportStatus("Preparing…");
+
+      function fallbackDownload() {
+        try {
+          var blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url; a.download = filename;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          setExportStatus("Downloaded.");
+        } catch (err2) {
+          setExportStatus("Export unavailable here.");
+        }
+        setTimeout(function () { setExportStatus(""); }, 2500);
+      }
+
+      if (typeof window !== "undefined" && window.claude && window.claude.use) {
+        window.claude.use("downloads").then(function (downloads) {
+          if (!downloads) { fallbackDownload(); return; }
+          downloads.save({ filename: filename, data: csvText }).then(function (dlResult) {
+            setExportStatus(dlResult && dlResult.status === "delivered" ? "Delivered." : "Saved.");
+            setTimeout(function () { setExportStatus(""); }, 2500);
+          }).catch(function (err) {
+            if (err && err.code === "declined") { setExportStatus(""); return; }
+            if (err && err.code === "rate_limited") { setExportStatus("Try again in a moment."); setTimeout(function () { setExportStatus(""); }, 2500); return; }
+            fallbackDownload();
+          });
+        }).catch(fallbackDownload);
+      } else {
+        fallbackDownload();
+      }
+    }
+
+    function handleExportMatches() { if (result) downloadCsv(result.matchedCsvText, "profile-finder-matches.csv"); }
+    function handleExportRest() { if (result) downloadCsv(result.restCsvText, "profile-finder-rest.csv"); }
+
+    return h("div", { className: "app-shell" },
+      h("nav", { className: "page-nav" },
+        h("a", { className: "page-nav-link", href: "/" }, "Account Analysis"),
+        h("a", { className: "page-nav-link", href: "/discord.html" }, "Jigging Analysis"),
+        h("a", { className: "page-nav-link page-nav-active", href: "/profile-finder.html" }, "Profile Finder"),
+        h("a", { className: "page-nav-link", href: "/account-finder.html" }, "Account Finder")
+      ),
+      h("header", { className: "topbar" },
+        h("div", { className: "brand" },
+          h("span", { className: "brand-mark" }, "OL"),
+          h("div", null,
+            h("h1", { className: "brand-title" }, "Profile Finder"),
+            h("p", { className: "brand-tag" }, "Load a profile CSV, paste the emails you're looking for, and split it into a matches file and a rest file — every column intact.")
+          )
+        )
+      ),
+      h("main", { className: "workspace" },
+        h(IntakePanel, {
+          fileName: file ? file.name : null, isDragging: isDragging, onDragOver: onDragOver, onDragLeave: onDragLeave, onDrop: onDrop,
+          onBrowseClick: onBrowseClick, fileInputRef: fileInputRef, onFileInputChange: onFileInputChange, onRemoveFile: onRemoveFile,
+          onClearAll: onClearAll, emailsText: emailsText, onEmailsTextChange: setEmailsText, emailCount: emailCount,
+          onFilter: onFilter, filterDisabled: !file || !emailCount || filtering, filtering: filtering,
+        }),
+        h("section", { className: "analysis" },
+          h("h2", { className: "panel-title" }, "Matches"),
+          errorMsg ? h("div", { className: "notice notice-bad" }, errorMsg) : null,
+          result ? h("div", { className: "stat-row" },
+            h(StatTile, { label: "Emails listed", value: result.emailCount }),
+            h(StatTile, { label: "Found", value: result.foundCount, tone: "found" }),
+            h(StatTile, { label: "Not found", value: result.notFound.length, tone: result.notFound.length ? "missing" : null }),
+            h(StatTile, { label: "Rows matched", value: result.rows.length }),
+            h(StatTile, { label: "Rows in rest", value: result.restCount })
+          ) : null,
+          result ? h("div", { className: "toolbar" },
+            h("span", { className: "muted small" },
+              result.rows.length + " matching row" + (result.rows.length === 1 ? "" : "s") +
+              ", " + result.restCount + " in the rest file"
+            ),
+            h("div", { className: "toolbar-export" },
+              exportStatus ? h("span", { className: "export-status" }, exportStatus) : null,
+              h("button", { className: "btn btn-ghost", onClick: handleExportRest, disabled: !result.restCount }, "Export Rest CSV"),
+              h("button", { className: "btn btn-primary", onClick: handleExportMatches, disabled: !result.rows.length }, "Export Matches CSV")
+            )
+          ) : null,
+          result && result.duplicated.length > 0 ? h("div", { className: "notice notice-bad" },
+            h("p", { className: "notice-title" }, result.duplicated.length + " email(s) matched more than one row in the CSV:"),
+            h("p", { className: "notice-list" }, result.duplicated.map(function (d) { return d.email + " (" + d.count + ")"; }).join(", "))
+          ) : null,
+          result && result.notFound.length > 0 ? h("div", { className: "notice notice-bad" },
+            h("p", { className: "notice-title" }, result.notFound.length + " email(s) not found:"),
+            h("p", { className: "notice-list" }, result.notFound.join(", "))
+          ) : null,
+          h(ResultsTable, { headers: result ? result.fieldnames : [], rows: result ? result.rows : [] })
+        )
+      ),
+      h("footer", { className: "footer-note" }, "The CSV is filtered by the local Python backend (app.py) using the same logic as backend/profile_finder/filter.py — nothing is stored.")
+    );
+  }
+
+  var rootEl = document.getElementById("root");
+  ReactDOM.createRoot(rootEl).render(h(App));
+})();
+</script>
