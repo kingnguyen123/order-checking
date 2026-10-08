@@ -2,34 +2,40 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   :root {
-    --paper: #eef0ec;
-    --surface: #ffffff;
-    --surface-2: #f5f4ef;
-    --ink: #1b2430;
-    --ink-muted: #5c6672;
-    --border: #d8d9d0;
-    --accent: #2c3e6b;
-    --accent-contrast: #ffffff;
-    --accent-soft: #e4e8f3;
-    --stamp-success: #1f7a4d;
-    --stamp-success-bg: #e3f3e9;
-    --stamp-cancel: #b23b2e;
-    --stamp-cancel-bg: #f7e6e3;
+    --bg: #000201;
+    --bg-sidebar: #010602;
+    --bg-input: #070d0b;
+    --surface: #0b1713;
+    --surface-hover: #0d1915;
+    --track: #14201c;
+    --border: #1a2a24;
+
+    --text: #e8ece9;
+    --text-secondary: #8a918d;
+    --text-muted: #4f5753;
+
+    --primary: #00ca74;
+    --primary-dark: #005d36;
+    --success: #03a329;
+    --warning: #f09900;
+    --danger: #e9000e;
+
+    /* legacy token names, aliased onto the palette above */
+    --paper: var(--bg);
+    --surface-2: var(--surface-hover);
+    --ink: var(--text);
+    --ink-muted: var(--text-secondary);
+    --accent: var(--primary);
+    --accent-contrast: var(--bg);
+    --accent-soft: rgba(0, 202, 116, 0.12);
+    --stamp-success: var(--success);
+    --stamp-success-bg: rgba(3, 163, 41, 0.16);
+    --stamp-cancel: var(--danger);
+    --stamp-cancel-bg: rgba(233, 0, 14, 0.16);
+
     --font-display: 'Zilla Slab', Georgia, 'Times New Roman', serif;
     --font-body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
     --font-mono: 'IBM Plex Mono', 'Consolas', 'SFMono-Regular', monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --paper: #11161d; --surface: #171e28; --surface-2: #1d2530; --ink: #e7e6e1; --ink-muted: #96a0ab;
-      --border: #2b3542; --accent: #91a5e0; --accent-contrast: #11161d; --accent-soft: #232c42;
-      --stamp-success: #52c98a; --stamp-success-bg: #163826; --stamp-cancel: #f1806a; --stamp-cancel-bg: #3c2019;
-    }
-  }
-  :root[data-theme="dark"] {
-    --paper: #11161d; --surface: #171e28; --surface-2: #1d2530; --ink: #e7e6e1; --ink-muted: #96a0ab;
-    --border: #2b3542; --accent: #91a5e0; --accent-contrast: #11161d; --accent-soft: #232c42;
-    --stamp-success: #52c98a; --stamp-success-bg: #163826; --stamp-cancel: #f1806a; --stamp-cancel-bg: #3c2019;
   }
 
   * { box-sizing: border-box; }
@@ -39,9 +45,9 @@
 
   .app-shell { width: calc(100vw - 40px); max-width: 2400px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
 
-  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) var(--track); }
   .scroll-box::-webkit-scrollbar { width: 11px; height: 11px; }
-  .scroll-box::-webkit-scrollbar-track { background: transparent; }
+  .scroll-box::-webkit-scrollbar-track { background: var(--track); }
   .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
   .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
 
@@ -71,7 +77,7 @@
   .panel-title { font-family: var(--font-display); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin: 0 0 6px; }
   .panel-hint { font-size: 12.5px; color: var(--ink-muted); margin: 0 0 14px; line-height: 1.5; }
 
-  .intake { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
+  .intake { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
   .intake-section { display: flex; flex-direction: column; gap: 8px; }
   .intake-section + .intake-section { padding-top: 14px; border-top: 1px solid var(--border); }
 
@@ -94,7 +100,7 @@
 
   .email-textarea {
     width: 100%; min-height: 130px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5;
+    background: var(--bg-input); color: var(--ink); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5;
   }
   .email-count { font-size: 12px; color: var(--ink-muted); }
 
@@ -146,11 +152,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-<script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
 (function () {
   "use strict";
   var useState = React.useState, useMemo = React.useMemo, useRef = React.useRef;
-  var h = React.createElement;
 
   function csvEscape(v) {
     var s = v === null || v === undefined ? "" : String(v);
@@ -163,81 +169,97 @@
   }
 
   function UploadIcon() {
-    return h("svg", { viewBox: "0 0 24 24", width: 26, height: 26, "aria-hidden": "true" },
-      h("path", {
-        d: "M12 3v10m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3",
-        stroke: "currentColor", strokeWidth: "1.6", fill: "none", strokeLinecap: "round", strokeLinejoin: "round",
-      })
+    return (
+      <svg viewBox="0 0 24 24" width={26} height={26} aria-hidden="true">
+        <path
+          d="M12 3v10m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"
+          stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"
+        />
+      </svg>
     );
   }
 
   function StatTile(props) {
-    return h("div", { className: "stat-tile" + (props.tone ? " stat-" + props.tone : "") },
-      h("div", { className: "stat-value" }, props.value),
-      h("div", { className: "stat-label" }, props.label)
+    return (
+      <div className={"stat-tile" + (props.tone ? " stat-" + props.tone : "")}>
+        <div className="stat-value">{props.value}</div>
+        <div className="stat-label">{props.label}</div>
+      </div>
     );
   }
 
   function IntakePanel(props) {
-    return h("aside", { className: "intake" },
-      h("div", { className: "intake-section" },
-        h("h2", { className: "panel-title" }, "1. Profile CSV"),
-        h("p", { className: "panel-hint" }, "One CSV export with an Email Address column and all the profile columns you want kept."),
-        props.fileName ? h("div", { className: "file-row" },
-          h("div", { className: "file-row-main" },
-            h("span", { className: "file-name" }, props.fileName),
-            h("button", { className: "icon-btn", onClick: props.onRemoveFile, "aria-label": "Remove file" }, "×")
-          )
-        ) : h("div", {
-          className: "dropzone" + (props.isDragging ? " dropzone-active" : ""),
-          onDragOver: props.onDragOver, onDragLeave: props.onDragLeave, onDrop: props.onDrop,
-          onClick: props.onBrowseClick, role: "button", tabIndex: 0,
-          onKeyDown: function (e) { if (e.key === "Enter" || e.key === " ") props.onBrowseClick(); },
-        },
-          h(UploadIcon, null),
-          h("p", { className: "dropzone-title" }, "Drag a CSV file here"),
-          h("p", { className: "dropzone-sub" }, "or click to browse"),
-          h("input", {
-            ref: props.fileInputRef, type: "file", accept: ".csv,text/csv",
-            style: { display: "none" }, onChange: props.onFileInputChange,
-          })
-        )
-      ),
-      h("div", { className: "intake-section" },
-        h("h2", { className: "panel-title" }, "2. Emails to find"),
-        h("p", { className: "panel-hint" }, "Paste the list of emails, one per line (commas also work)."),
-        h("textarea", {
-          className: "email-textarea", value: props.emailsText, spellCheck: false,
-          placeholder: "a@example.com\nb@example.com\n...",
-          onChange: function (e) { props.onEmailsTextChange(e.target.value); },
-        }),
-        h("div", { className: "email-count" }, props.emailCount + " email" + (props.emailCount === 1 ? "" : "s") + " listed")
-      ),
-      h("div", { className: "intake-actions" },
-        h("button", { className: "btn btn-ghost", onClick: props.onClearAll }, "Clear all"),
-        h("button", { className: "btn btn-primary", onClick: props.onFilter, disabled: props.filterDisabled }, props.filtering ? "Filtering…" : "Filter")
-      )
+    return (
+      <aside className="intake">
+        <div className="intake-section">
+          <h2 className="panel-title">1. Profile CSV</h2>
+          <p className="panel-hint">One CSV export with an Email Address column and all the profile columns you want kept.</p>
+          {props.fileName ? (
+            <div className="file-row">
+              <div className="file-row-main">
+                <span className="file-name">{props.fileName}</span>
+                <button className="icon-btn" onClick={props.onRemoveFile} aria-label="Remove file">×</button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={"dropzone" + (props.isDragging ? " dropzone-active" : "")}
+              onDragOver={props.onDragOver} onDragLeave={props.onDragLeave} onDrop={props.onDrop}
+              onClick={props.onBrowseClick} role="button" tabIndex={0}
+              onKeyDown={function (e) { if (e.key === "Enter" || e.key === " ") props.onBrowseClick(); }}
+            >
+              <UploadIcon />
+              <p className="dropzone-title">Drag a CSV file here</p>
+              <p className="dropzone-sub">or click to browse</p>
+              <input
+                ref={props.fileInputRef} type="file" accept=".csv,text/csv"
+                style={{ display: "none" }} onChange={props.onFileInputChange}
+              />
+            </div>
+          )}
+        </div>
+        <div className="intake-section">
+          <h2 className="panel-title">2. Emails or profile names to find</h2>
+          <p className="panel-hint">Paste the list, one per line (commas also work). Each entry can be an email address or a profile name, mixed freely - a row matches if either one is in your list.</p>
+          <textarea
+            className="email-textarea" value={props.emailsText} spellCheck={false}
+            placeholder={"a@example.com\nKem B (2)\n..."}
+            onChange={function (e) { props.onEmailsTextChange(e.target.value); }}
+          />
+          <div className="email-count">{props.emailCount + " entr" + (props.emailCount === 1 ? "y" : "ies") + " listed"}</div>
+        </div>
+        <div className="intake-actions">
+          <button className="btn btn-ghost" onClick={props.onClearAll}>Clear all</button>
+          <button className="btn btn-primary" onClick={props.onFilter} disabled={props.filterDisabled}>{props.filtering ? "Filtering…" : "Filter"}</button>
+        </div>
+      </aside>
     );
   }
 
   function ResultsTable(props) {
     if (!props.headers.length) {
-      return h("div", { className: "empty-state" }, "Load a profile CSV, paste the emails to look for, then click Filter.");
+      return <div className="empty-state">Load a profile CSV, paste the emails or profile names to look for, then click Filter.</div>;
     }
     if (!props.rows.length) {
-      return h("div", { className: "empty-state" }, "No rows matched those emails.");
+      return <div className="empty-state">No rows matched those entries.</div>;
     }
-    return h("div", { className: "table-wrap scroll-box" },
-      h("table", { className: "ledger-table" },
-        h("thead", null, h("tr", null, props.headers.map(function (hd) { return h("th", { key: hd }, hd); }))),
-        h("tbody", null,
-          props.rows.map(function (r, i) {
-            return h("tr", { className: "data-row", key: i },
-              props.headers.map(function (hd) { return h("td", { key: hd }, r[hd] || ""); })
-            );
-          })
-        )
-      )
+    return (
+      <div className="table-wrap scroll-box">
+        <table className="ledger-table">
+          <thead>
+            <tr>{props.headers.map(function (hd) { return <th key={hd}>{hd}</th>; })}</tr>
+          </thead>
+          <tbody>
+            {props.rows.map(function (r, i) {
+              return (
+                <tr className="data-row" key={i}>
+                  {props.headers.map(function (hd) { return <td key={hd}>{r[hd] || ""}</td>; })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     );
   }
 
@@ -330,66 +352,76 @@
     function handleExportMatches() { if (result) downloadCsv(result.matchedCsvText, "profile-finder-matches.csv"); }
     function handleExportRest() { if (result) downloadCsv(result.restCsvText, "profile-finder-rest.csv"); }
 
-    return h("div", { className: "app-shell" },
-      h("nav", { className: "page-nav" },
-        h("a", { className: "page-nav-link", href: "/" }, "Account Analysis"),
-        h("a", { className: "page-nav-link", href: "/discord.html" }, "Jigging Analysis"),
-        h("a", { className: "page-nav-link page-nav-active", href: "/profile-finder.html" }, "Profile Finder"),
-        h("a", { className: "page-nav-link", href: "/account-finder.html" }, "Account Finder")
-      ),
-      h("header", { className: "topbar" },
-        h("div", { className: "brand" },
-          h("span", { className: "brand-mark" }, "OL"),
-          h("div", null,
-            h("h1", { className: "brand-title" }, "Profile Finder"),
-            h("p", { className: "brand-tag" }, "Load a profile CSV, paste the emails you're looking for, and split it into a matches file and a rest file — every column intact.")
-          )
-        )
-      ),
-      h("main", { className: "workspace" },
-        h(IntakePanel, {
-          fileName: file ? file.name : null, isDragging: isDragging, onDragOver: onDragOver, onDragLeave: onDragLeave, onDrop: onDrop,
-          onBrowseClick: onBrowseClick, fileInputRef: fileInputRef, onFileInputChange: onFileInputChange, onRemoveFile: onRemoveFile,
-          onClearAll: onClearAll, emailsText: emailsText, onEmailsTextChange: setEmailsText, emailCount: emailCount,
-          onFilter: onFilter, filterDisabled: !file || !emailCount || filtering, filtering: filtering,
-        }),
-        h("section", { className: "analysis" },
-          h("h2", { className: "panel-title" }, "Matches"),
-          errorMsg ? h("div", { className: "notice notice-bad" }, errorMsg) : null,
-          result ? h("div", { className: "stat-row" },
-            h(StatTile, { label: "Emails listed", value: result.emailCount }),
-            h(StatTile, { label: "Found", value: result.foundCount, tone: "found" }),
-            h(StatTile, { label: "Not found", value: result.notFound.length, tone: result.notFound.length ? "missing" : null }),
-            h(StatTile, { label: "Rows matched", value: result.rows.length }),
-            h(StatTile, { label: "Rows in rest", value: result.restCount })
-          ) : null,
-          result ? h("div", { className: "toolbar" },
-            h("span", { className: "muted small" },
-              result.rows.length + " matching row" + (result.rows.length === 1 ? "" : "s") +
-              ", " + result.restCount + " in the rest file"
-            ),
-            h("div", { className: "toolbar-export" },
-              exportStatus ? h("span", { className: "export-status" }, exportStatus) : null,
-              h("button", { className: "btn btn-ghost", onClick: handleExportRest, disabled: !result.restCount }, "Export Rest CSV"),
-              h("button", { className: "btn btn-primary", onClick: handleExportMatches, disabled: !result.rows.length }, "Export Matches CSV")
-            )
-          ) : null,
-          result && result.duplicated.length > 0 ? h("div", { className: "notice notice-bad" },
-            h("p", { className: "notice-title" }, result.duplicated.length + " email(s) matched more than one row in the CSV:"),
-            h("p", { className: "notice-list" }, result.duplicated.map(function (d) { return d.email + " (" + d.count + ")"; }).join(", "))
-          ) : null,
-          result && result.notFound.length > 0 ? h("div", { className: "notice notice-bad" },
-            h("p", { className: "notice-title" }, result.notFound.length + " email(s) not found:"),
-            h("p", { className: "notice-list" }, result.notFound.join(", "))
-          ) : null,
-          h(ResultsTable, { headers: result ? result.fieldnames : [], rows: result ? result.rows : [] })
-        )
-      ),
-      h("footer", { className: "footer-note" }, "The CSV is filtered by the local Python backend (app.py) using the same logic as backend/profile_finder/filter.py — nothing is stored.")
+    return (
+      <div className="app-shell">
+        <nav className="page-nav">
+          <a className="page-nav-link" href="/">Account Analysis</a>
+          <a className="page-nav-link" href="/discord.html">Jigging Analysis</a>
+          <a className="page-nav-link page-nav-active" href="/profile-finder.html">Profile Finder</a>
+          <a className="page-nav-link" href="/account-finder.html">Account Finder</a>
+        </nav>
+        <header className="topbar">
+          <div className="brand">
+            <span className="brand-mark">OL</span>
+            <div>
+              <h1 className="brand-title">Profile Finder</h1>
+              <p className="brand-tag">Load a profile CSV, paste the emails or profile names you're looking for, and split it into a matches file and a rest file — every column intact.</p>
+            </div>
+          </div>
+        </header>
+        <main className="workspace">
+          <IntakePanel
+            fileName={file ? file.name : null} isDragging={isDragging} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+            onBrowseClick={onBrowseClick} fileInputRef={fileInputRef} onFileInputChange={onFileInputChange} onRemoveFile={onRemoveFile}
+            onClearAll={onClearAll} emailsText={emailsText} onEmailsTextChange={setEmailsText} emailCount={emailCount}
+            onFilter={onFilter} filterDisabled={!file || !emailCount || filtering} filtering={filtering}
+          />
+          <section className="analysis">
+            <h2 className="panel-title">Matches</h2>
+            {errorMsg ? <div className="notice notice-bad">{errorMsg}</div> : null}
+            {result ? (
+              <div className="stat-row">
+                <StatTile label="Entries listed" value={result.emailCount} />
+                <StatTile label="Found" value={result.foundCount} tone="found" />
+                <StatTile label="Not found" value={result.notFound.length} tone={result.notFound.length ? "missing" : null} />
+                <StatTile label="Rows matched" value={result.rows.length} />
+                <StatTile label="Rows in rest" value={result.restCount} />
+              </div>
+            ) : null}
+            {result ? (
+              <div className="toolbar">
+                <span className="muted small">
+                  {result.rows.length + " matching row" + (result.rows.length === 1 ? "" : "s") +
+                    ", " + result.restCount + " in the rest file"}
+                </span>
+                <div className="toolbar-export">
+                  {exportStatus ? <span className="export-status">{exportStatus}</span> : null}
+                  <button className="btn btn-ghost" onClick={handleExportRest} disabled={!result.restCount}>Export Rest CSV</button>
+                  <button className="btn btn-primary" onClick={handleExportMatches} disabled={!result.rows.length}>Export Matches CSV</button>
+                </div>
+              </div>
+            ) : null}
+            {result && result.duplicated.length > 0 ? (
+              <div className="notice notice-bad">
+                <p className="notice-title">{result.duplicated.length + " entry/entries matched more than one row in the CSV:"}</p>
+                <p className="notice-list">{result.duplicated.map(function (d) { return d.email + " (" + d.count + ")"; }).join(", ")}</p>
+              </div>
+            ) : null}
+            {result && result.notFound.length > 0 ? (
+              <div className="notice notice-bad">
+                <p className="notice-title">{result.notFound.length + " entry/entries not found:"}</p>
+                <p className="notice-list">{result.notFound.join(", ")}</p>
+              </div>
+            ) : null}
+            <ResultsTable headers={result ? result.fieldnames : []} rows={result ? result.rows : []} />
+          </section>
+        </main>
+        <footer className="footer-note">The CSV is filtered by the local Python backend (app.py) using the same logic as backend/profile_finder/filter.py — nothing is stored.</footer>
+      </div>
     );
   }
 
   var rootEl = document.getElementById("root");
-  ReactDOM.createRoot(rootEl).render(h(App));
+  ReactDOM.createRoot(rootEl).render(<App />);
 })();
 </script>

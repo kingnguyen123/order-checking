@@ -2,72 +2,46 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   :root {
-    --paper: #eef0ec;
-    --surface: #ffffff;
-    --surface-2: #f5f4ef;
-    --ink: #1b2430;
-    --ink-muted: #5c6672;
-    --border: #d8d9d0;
-    --accent: #2c3e6b;
-    --accent-contrast: #ffffff;
-    --accent-soft: #e4e8f3;
-    --stamp-success: #1f7a4d;
-    --stamp-success-bg: #e3f3e9;
-    --stamp-cancel: #b23b2e;
-    --stamp-cancel-bg: #f7e6e3;
-    --stamp-new: #a97417;
-    --stamp-new-bg: #f5ecd8;
-    --stamp-both: #6b4fa0;
-    --stamp-both-bg: #ece6f5;
-    --stamp-good: #8a6d0f;
-    --stamp-good-bg: #f4ecd3;
+    --bg: #000201;
+    --bg-sidebar: #010602;
+    --bg-input: #070d0b;
+    --surface: #0b1713;
+    --surface-hover: #0d1915;
+    --track: #14201c;
+    --border: #1a2a24;
+
+    --text: #e8ece9;
+    --text-secondary: #8a918d;
+    --text-muted: #4f5753;
+
+    --primary: #00ca74;
+    --primary-dark: #005d36;
+    --success: #03a329;
+    --warning: #f09900;
+    --danger: #e9000e;
+
+    /* legacy token names, aliased onto the palette above */
+    --paper: var(--bg);
+    --surface-2: var(--surface-hover);
+    --ink: var(--text);
+    --ink-muted: var(--text-secondary);
+    --accent: var(--primary);
+    --accent-contrast: var(--bg);
+    --accent-soft: rgba(0, 202, 116, 0.12);
+    --stamp-success: var(--success);
+    --stamp-success-bg: rgba(3, 163, 41, 0.16);
+    --stamp-cancel: var(--danger);
+    --stamp-cancel-bg: rgba(233, 0, 14, 0.16);
+    --stamp-new: var(--primary-dark);
+    --stamp-new-bg: rgba(0, 93, 54, 0.32);
+    --stamp-both: var(--warning);
+    --stamp-both-bg: rgba(240, 153, 0, 0.16);
+    --stamp-good: var(--primary);
+    --stamp-good-bg: rgba(0, 202, 116, 0.16);
+
     --font-display: 'Zilla Slab', Georgia, 'Times New Roman', serif;
     --font-body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
     --font-mono: 'IBM Plex Mono', 'Consolas', 'SFMono-Regular', monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --paper: #11161d;
-      --surface: #171e28;
-      --surface-2: #1d2530;
-      --ink: #e7e6e1;
-      --ink-muted: #96a0ab;
-      --border: #2b3542;
-      --accent: #91a5e0;
-      --accent-contrast: #11161d;
-      --accent-soft: #232c42;
-      --stamp-success: #52c98a;
-      --stamp-success-bg: #163826;
-      --stamp-cancel: #f1806a;
-      --stamp-cancel-bg: #3c2019;
-      --stamp-new: #e0ab52;
-      --stamp-new-bg: #3a2e12;
-      --stamp-both: #b39ee0;
-      --stamp-both-bg: #2c2440;
-      --stamp-good: #d9bd52;
-      --stamp-good-bg: #362e10;
-    }
-  }
-  :root[data-theme="dark"] {
-    --paper: #11161d;
-    --surface: #171e28;
-    --surface-2: #1d2530;
-    --ink: #e7e6e1;
-    --ink-muted: #96a0ab;
-    --border: #2b3542;
-    --accent: #91a5e0;
-    --accent-contrast: #11161d;
-    --accent-soft: #232c42;
-    --stamp-success: #52c98a;
-    --stamp-success-bg: #163826;
-    --stamp-cancel: #f1806a;
-    --stamp-cancel-bg: #3c2019;
-    --stamp-new: #e0ab52;
-    --stamp-new-bg: #3a2e12;
-    --stamp-both: #b39ee0;
-    --stamp-both-bg: #2c2440;
-    --stamp-good: #d9bd52;
-    --stamp-good-bg: #362e10;
   }
 
   * { box-sizing: border-box; }
@@ -196,7 +170,7 @@
 
   .search-textarea {
     width: 100%; min-height: 70px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 13px; resize: vertical;
+    background: var(--bg-input); color: var(--ink); font-family: var(--font-mono); font-size: 13px; resize: vertical;
   }
   .status-group { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   .status-group-header { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
@@ -209,7 +183,11 @@
   }
   .btn.small { padding: 4px 10px; font-size: 11.5px; }
 
-  .result-filter-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .result-filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .jig-search-input {
+    flex: 1; min-width: 160px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg-input); color: var(--ink); font-family: var(--font-mono); font-size: 13px;
+  }
   .result-filter { position: relative; width: 220px; max-width: 100%; }
   .result-filter .dropdown-panel { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10; width: max-content; min-width: 100%; max-width: 320px; }
 
@@ -243,6 +221,20 @@
   .jig-stat-yellow { color: var(--stamp-good); }
   .jig-stat-neutral { color: var(--ink-muted); }
 
+  .proxy-chart { display: flex; flex-direction: column; gap: 10px; }
+  .proxy-bar-row { display: flex; flex-direction: column; gap: 4px; }
+  .proxy-bar-label {
+    font-family: var(--font-mono); font-size: 11.5px; color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .proxy-bar-track-row { display: flex; align-items: center; gap: 8px; }
+  .proxy-bar-track { flex: 1; height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+  .proxy-bar-fill { height: 100%; border-radius: 999px; background: var(--primary); transition: width .2s ease; }
+  .proxy-bar-count {
+    flex-shrink: 0; text-align: right; font-family: var(--font-mono); font-weight: 700;
+    font-size: 11.5px; white-space: nowrap; min-width: 18px;
+  }
+
   .status-group-green { border-left: 3px solid var(--stamp-success); }
   .status-group-green .status-group-header { color: var(--stamp-success); }
   .status-group-red { border-left: 3px solid var(--stamp-cancel); }
@@ -254,9 +246,9 @@
   .status-group-neutral { border-left: 3px solid var(--ink-muted); }
   .status-group-neutral .status-group-header { color: var(--ink-muted); }
 
-  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) var(--track); }
   .scroll-box::-webkit-scrollbar { width: 11px; height: 11px; }
-  .scroll-box::-webkit-scrollbar-track { background: transparent; }
+  .scroll-box::-webkit-scrollbar-track { background: var(--track); }
   .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
   .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
 
@@ -273,7 +265,7 @@
   @media (max-width: 860px) { .workspace { grid-template-columns: 1fr; } .sidebar { position: static !important; } }
 
   .sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; min-width: 0; }
-  .sidebar-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .sidebar-card { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .sidebar-title {
     font-family: var(--font-display); font-weight: 600; font-size: 12.5px;
     text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin: 0;
@@ -283,12 +275,16 @@
   .search-row { display: flex; gap: 6px; }
   .search-input-inline {
     flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--surface); color: var(--ink); font-family: var(--font-mono); font-size: 13px;
+    background: var(--bg-input); color: var(--ink); font-family: var(--font-mono); font-size: 13px;
   }
 
+  .date-picker-wrap { position: relative; width: max-content; max-width: 100%; }
+  .date-picker-wrap .dropdown-trigger { width: auto; min-width: 220px; }
   .date-range-panel {
     border: 1px solid var(--border); border-radius: 8px; padding: 10px;
     background: var(--surface); display: flex; flex-direction: column; gap: 8px;
+    position: absolute; top: calc(100% + 4px); left: 0; z-index: 10; width: 280px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
   .date-range-header { display: flex; align-items: center; justify-content: space-between; }
   .date-range-title { font-family: var(--font-display); font-weight: 600; font-size: 12.5px; }
@@ -331,11 +327,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-<script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
 (function () {
   "use strict";
   var useState = React.useState, useEffect = React.useEffect, useMemo = React.useMemo;
-  var h = React.createElement;
 
   function statusColorKey(status) {
     var s = (status || "").toLowerCase();
@@ -371,64 +367,86 @@
     return ids;
   }
 
+  function channelNamesById(guilds) {
+    var names = {};
+    guilds.forEach(function (g) {
+      g.categories.forEach(function (cat) {
+        cat.channels.forEach(function (ch) { names[ch.id] = ch.name; });
+      });
+    });
+    return names;
+  }
+
   function CategoryGroup(props) {
     var cat = props.category;
     var selected = props.selected;
     var allSelected = cat.channels.length > 0 && cat.channels.every(function (ch) { return selected.has(ch.id); });
-    return h("div", { className: "category-group" },
-      h("label", { className: "category-header" },
-        h("input", {
-          type: "checkbox", checked: allSelected,
-          onChange: function () { props.onToggleCategory(cat, !allSelected); },
-        }),
-        cat.name
-      ),
-      h("div", { className: "channel-list" },
-        cat.channels.map(function (ch) {
-          return h("label", { className: "channel-row", key: ch.id },
-            h("input", {
-              type: "checkbox", checked: selected.has(ch.id),
-              onChange: function () { props.onToggleChannel(ch.id); },
-            }),
-            h("span", { className: "channel-hash" }, "#"),
-            ch.name
-          );
-        })
-      )
+    return (
+      <div className="category-group">
+        <label className="category-header">
+          <input
+            type="checkbox" checked={allSelected}
+            onChange={function () { props.onToggleCategory(cat, !allSelected); }}
+          />
+          {cat.name}
+        </label>
+        <div className="channel-list">
+          {cat.channels.map(function (ch) {
+            return (
+              <label className="channel-row" key={ch.id}>
+                <input
+                  type="checkbox" checked={selected.has(ch.id)}
+                  onChange={function () { props.onToggleChannel(ch.id); }}
+                />
+                <span className="channel-hash">#</span>
+                {ch.name}
+              </label>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 
   function ScanProgress(props) {
     var progress = props.progress;
     if (!progress) return null;
-    if (progress.error) return h("p", { className: "muted small", style: { margin: 0 } }, "Error: " + progress.error);
+    if (progress.error) return <p className="muted small" style={{ margin: 0 }}>{"Error: " + progress.error}</p>;
 
-    var channels = Object.keys(progress.channels || {}).map(function (id) {
-      return Object.assign({ id: id }, progress.channels[id]);
+    // A channel not yet in progress.channels hasn't been reached by the scan
+    // loop yet - "Queued…". Once reached, its entry holds live counts that
+    // get replaced with the final ones when that channel's scan finishes;
+    // there's no separate per-channel "done" flag, only the overall status.
+    var channels = (props.selectedChannels || []).map(function (sel) {
+      return Object.assign({ id: sel.id, name: sel.name }, progress.channels && progress.channels[sel.id]);
     });
     var totals = channels.reduce(function (acc, c) {
-      acc.messages += c.messages_scanned || 0;
-      acc.orders += c.orders_found || 0;
-      acc.newRecords += c.new_records || 0;
+      acc.messages += c.seen || 0;
+      acc.orders += c.orders || 0;
+      acc.newRecords += c.new || 0;
       return acc;
     }, { messages: 0, orders: 0, newRecords: 0 });
 
-    return h("div", { className: "scan-progress" },
-      channels.map(function (c) {
-        var label = c.error ? "Error: " + c.error : c.done
-          ? c.messages_scanned + " msgs scanned, " + c.orders_found + " orders (" + c.new_records + " new)" + (c.rejected ? ", " + c.rejected + " unrecognized" : "")
-          : c.status === "scanning" ? c.messages_scanned + " msgs scanned so far…" : "Queued…";
-        return h("div", { className: "scan-channel-row", key: c.id },
-          h("span", { className: "scan-channel-name" }, "#" + c.name),
-          h("span", { className: "scan-channel-stats" }, label)
-        );
-      }),
-      h("div", { className: "scan-summary" },
-        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, totals.messages), h("div", { className: "scan-stat-label" }, "Messages scanned")),
-        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, totals.orders), h("div", { className: "scan-stat-label" }, "Orders found")),
-        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, totals.newRecords), h("div", { className: "scan-stat-label" }, "New records")),
-        h("div", { className: "scan-stat" }, h("div", { className: "scan-stat-value" }, progress.status === "complete" ? "Done" : "Running…"), h("div", { className: "scan-stat-label" }, "Status"))
-      )
+    return (
+      <div className="scan-progress">
+        {channels.map(function (c) {
+          var label = c.error ? "Error: " + c.error
+            : c.seen == null ? "Queued…"
+            : c.seen + " msgs scanned, " + c.orders + " orders (" + c.new + " new)" + (c.rejected ? ", " + c.rejected + " unrecognized" : "");
+          return (
+            <div className="scan-channel-row" key={c.id}>
+              <span className="scan-channel-name">{"#" + c.name}</span>
+              <span className="scan-channel-stats">{label}</span>
+            </div>
+          );
+        })}
+        <div className="scan-summary">
+          <div className="scan-stat"><div className="scan-stat-value">{totals.messages}</div><div className="scan-stat-label">Messages scanned</div></div>
+          <div className="scan-stat"><div className="scan-stat-value">{totals.orders}</div><div className="scan-stat-label">Orders found</div></div>
+          <div className="scan-stat"><div className="scan-stat-value">{totals.newRecords}</div><div className="scan-stat-label">New records</div></div>
+          <div className="scan-stat"><div className="scan-stat-value">{progress.status === "done" ? "Done" : "Running…"}</div><div className="scan-stat-label">Status</div></div>
+        </div>
+      </div>
     );
   }
 
@@ -486,36 +504,42 @@
     function prevMonth() { setView(function (v) { var m = v.m - 1, y = v.y; if (m < 0) { m = 11; y--; } return { y: y, m: m }; }); }
     function nextMonth() { setView(function (v) { var m = v.m + 1, y = v.y; if (m > 11) { m = 0; y++; } return { y: y, m: m }; }); }
 
-    return h("div", { className: "date-range-panel" },
-      h("div", { className: "date-range-header" },
-        h("button", { type: "button", className: "btn btn-ghost date-nav", onClick: prevMonth }, "‹"),
-        h("span", { className: "date-range-title" }, MONTH_NAMES[view.m] + " " + view.y),
-        h("button", { type: "button", className: "btn btn-ghost date-nav", onClick: nextMonth }, "›")
-      ),
-      h("div", { className: "date-grid" },
-        DAY_LABELS.map(function (l, i) { return h("span", { className: "date-cell-label", key: i }, l); })
-      ),
-      weeks.map(function (week, wi) {
-        return h("div", { className: "date-grid", key: wi },
-          week.map(function (day, di) {
-            if (!day) return h("span", { className: "date-cell date-cell-empty", key: di });
-            var iso = toIso(view.y, view.m, day);
-            var inRange = props.after && props.before && iso >= props.after && iso <= props.before;
-            var isEdge = iso === props.after || iso === props.before;
-            var cls = "date-cell date-cell-day";
-            if (inRange) cls += " date-cell-inrange";
-            if (isEdge) cls += " date-cell-selected";
-            if (iso === todayIso) cls += " date-cell-today";
-            return h("button", {
-              type: "button", key: di, className: cls,
-              onClick: function () { handleDayClick(day); },
-            }, day);
-          })
-        );
-      }),
-      h("div", { className: "date-range-footer" },
-        h("button", { type: "button", className: "btn btn-ghost", onClick: function () { props.onChange("", ""); } }, "Clear")
-      )
+    return (
+      <div className="date-range-panel">
+        <div className="date-range-header">
+          <button type="button" className="btn btn-ghost date-nav" onClick={prevMonth}>‹</button>
+          <span className="date-range-title">{MONTH_NAMES[view.m] + " " + view.y}</span>
+          <button type="button" className="btn btn-ghost date-nav" onClick={nextMonth}>›</button>
+        </div>
+        <div className="date-grid">
+          {DAY_LABELS.map(function (l, i) { return <span className="date-cell-label" key={i}>{l}</span>; })}
+        </div>
+        {weeks.map(function (week, wi) {
+          return (
+            <div className="date-grid" key={wi}>
+              {week.map(function (day, di) {
+                if (!day) return <span className="date-cell date-cell-empty" key={di} />;
+                var iso = toIso(view.y, view.m, day);
+                var inRange = props.after && props.before && iso >= props.after && iso <= props.before;
+                var isEdge = iso === props.after || iso === props.before;
+                var cls = "date-cell date-cell-day";
+                if (inRange) cls += " date-cell-inrange";
+                if (isEdge) cls += " date-cell-selected";
+                if (iso === todayIso) cls += " date-cell-today";
+                return (
+                  <button
+                    type="button" key={di} className={cls}
+                    onClick={function () { handleDayClick(day); }}
+                  >{day}</button>
+                );
+              })}
+            </div>
+          );
+        })}
+        <div className="date-range-footer">
+          <button type="button" className="btn btn-ghost" onClick={function () { props.onChange("", ""); }}>Clear</button>
+        </div>
+      </div>
     );
   }
 
@@ -546,6 +570,7 @@
     var s30 = useState(""); var searchNote = s30[0], setSearchNote = s30[1];
     var s31 = useState(new Set()); var channelFilter = s31[0], setChannelFilter = s31[1];
     var s32 = useState(false); var channelFilterOpen = s32[0], setChannelFilterOpen = s32[1];
+    var s33 = useState(""); var jigSearch = s33[0], setJigSearch = s33[1];
     var toastTimers = React.useRef([]);
     var copyTimers = React.useRef({});
     var statusFilterRef = React.useRef(null);
@@ -660,7 +685,7 @@
             .then(function (r) { return r.json(); })
             .then(function (json) {
               setScanProgress(json);
-              if (json.status === "complete" || json.error) resolve(json);
+              if (json.status === "done" || json.error) resolve(json);
               else setTimeout(tick, 1200);
             })
             .catch(function () { resolve({ error: "Lost contact with Account Analysis while scanning." }); });
@@ -727,12 +752,12 @@
         .then(function (r) { return r.json(); })
         .then(function (json) {
           setSearchResults(json);
-          var statuses = json && json.byStatus ? Object.keys(json.byStatus) : [];
+          var statuses = json && json.profilesPerStatus ? Object.keys(json.profilesPerStatus) : [];
           setStatusFilter(new Set(statuses));
           setLastSearchTerms(names);
           setCategoryFilter(new Set(names));
           var channels = new Set();
-          Object.values((json && json.byProfileChannels) || {}).forEach(function (chs) {
+          Object.values((json && json.channelsPerProfile) || {}).forEach(function (chs) {
             chs.forEach(function (c) { channels.add(c); });
           });
           setChannelFilter(channels);
@@ -757,6 +782,21 @@
       return lastSearchTerms.filter(function (term) { return p.indexOf(term.toLowerCase()) !== -1; });
     }
 
+    // The jig name(s) a profile would show under in Jig Breakdown - one per
+    // matched category (extractJigName strips that category's own prefix),
+    // or a single best-effort name when it matched no category at all.
+    function profileJigNames(profile) {
+      var cats = profileCategories(profile);
+      if (!cats.length) return [extractJigName(profile, "")];
+      return cats.map(function (cat) { return extractJigName(profile, cat); });
+    }
+
+    function matchesJigSearch(profile) {
+      var jq = jigSearch.trim().toLowerCase();
+      if (!jq) return true;
+      return profileJigNames(profile).some(function (name) { return name.toLowerCase().indexOf(jq) !== -1; });
+    }
+
     function toggleCategoryFilter(term) {
       setCategoryFilter(function (prev) {
         var next = new Set(prev);
@@ -768,7 +808,7 @@
     // Which channel(s) a profile's orders came from - real stored data (not
     // guessed from the name), so it filters correctly even across servers.
     function profileChannels(profile) {
-      return (searchResults && searchResults.byProfileChannels && searchResults.byProfileChannels[profile]) || [];
+      return (searchResults && searchResults.channelsPerProfile && searchResults.channelsPerProfile[profile]) || [];
     }
 
     function toggleChannelFilter(channel) {
@@ -818,8 +858,8 @@
       var counts = {};
       lastSearchTerms.forEach(function (term) { counts[term] = new Set(); });
       if (searchResults && !searchResults.error) {
-        Object.keys(searchResults.byStatus).forEach(function (status) {
-          searchResults.byStatus[status].forEach(function (p) {
+        Object.keys(searchResults.profilesPerStatus).forEach(function (status) {
+          searchResults.profilesPerStatus[status].forEach(function (p) {
             profileCategories(p).forEach(function (term) { counts[term].add(p); });
           });
         });
@@ -831,9 +871,9 @@
 
     var channelCounts = useMemo(function () {
       var counts = {};
-      if (searchResults && !searchResults.error && searchResults.byProfileChannels) {
-        Object.keys(searchResults.byProfileChannels).forEach(function (profile) {
-          searchResults.byProfileChannels[profile].forEach(function (ch) {
+      if (searchResults && !searchResults.error && searchResults.channelsPerProfile) {
+        Object.keys(searchResults.channelsPerProfile).forEach(function (profile) {
+          searchResults.channelsPerProfile[profile].forEach(function (ch) {
             counts[ch] = counts[ch] || new Set();
             counts[ch].add(profile);
           });
@@ -851,13 +891,20 @@
     var jigBreakdown = useMemo(function () {
       var result = {};
       if (!searchResults || searchResults.error) return result;
-      Object.keys(searchResults.byStatus).forEach(function (status) {
+      Object.keys(searchResults.profilesPerStatus).forEach(function (status) {
         if (!statusFilter.has(status)) return;
-        searchResults.byStatus[status].forEach(function (profile) {
+        searchResults.profilesPerStatus[status].forEach(function (profile) {
           if (!profileChannels(profile).some(function (ch) { return channelFilter.has(ch); })) return;
-          profileCategories(profile).forEach(function (category) {
-            if (!categoryFilter.has(category)) return;
+          // No search terms (search-all) means there are no categories to
+          // group by at all - fall back to one entry per profile, same as
+          // profileJigNames() does, instead of silently producing nothing.
+          var cats = profileCategories(profile);
+          var categories = cats.length ? cats : lastSearchTerms.length === 0 ? [""] : [];
+          categories.forEach(function (category) {
+            if (lastSearchTerms.length > 0 && !categoryFilter.has(category)) return;
             var jig = extractJigName(profile, category);
+            var jq = jigSearch.trim().toLowerCase();
+            if (jq && jig.toLowerCase().indexOf(jq) === -1) return;
             result[category] = result[category] || {};
             result[category][jig] = result[category][jig] || {};
             result[category][jig][status] = (result[category][jig][status] || 0) + 1;
@@ -865,257 +912,344 @@
         });
       });
       return result;
-    }, [searchResults, statusFilter, categoryFilter, channelFilter, lastSearchTerms]);
+    }, [searchResults, statusFilter, categoryFilter, channelFilter, lastSearchTerms, jigSearch]);
 
-    return h("div", { className: "app-shell" },
-      h("nav", { className: "page-nav" },
-        h("a", { className: "page-nav-link", href: "/" }, "Account Analysis"),
-        h("a", { className: "page-nav-link page-nav-active", href: "/discord.html" }, "Jigging Analysis"),
-        h("a", { className: "page-nav-link", href: "/profile-finder.html" }, "Profile Finder"),
-        h("a", { className: "page-nav-link", href: "/account-finder.html" }, "Account Finder")
-      ),
-      h("header", { className: "topbar" },
-        h("div", { className: "brand" },
-          h("span", { className: "brand-mark" }, "OL"),
-          h("div", null,
-            h("h1", { className: "brand-title" }, "Jigging Analysis"),
-            h("p", { className: "brand-tag" }, "Track order notifications posted in Discord as a second data source, kept separate from CSV accounts.")
-          )
-        )
-      ),
+    return (
+      <div className="app-shell">
+        <nav className="page-nav">
+          <a className="page-nav-link" href="/">Account Analysis</a>
+          <a className="page-nav-link page-nav-active" href="/discord.html">Jigging Analysis</a>
+          <a className="page-nav-link" href="/profile-finder.html">Profile Finder</a>
+          <a className="page-nav-link" href="/account-finder.html">Account Finder</a>
+        </nav>
+        <header className="topbar">
+          <div className="brand">
+            <span className="brand-mark">OL</span>
+            <div>
+              <h1 className="brand-title">Jigging Analysis</h1>
+              <p className="brand-tag">Track order notifications posted in Discord as a second data source, kept separate from CSV accounts.</p>
+            </div>
+          </div>
+        </header>
 
-      h("div", null,
-        h("div", { className: "status-pill" },
-          h("span", { className: "status-dot " + (connected ? "status-dot-on" : "status-dot-off") }),
-          h("span", { className: "status-text" }, loading ? "Checking…" : connected ? "Discord Connected" : "Discord Disconnected"),
-          h("button", {
-            className: "icon-btn" + (loading ? " icon-btn-spin" : ""),
-            onClick: function () { load(); }, disabled: loading, title: "Refresh connection status", type: "button",
-          }, "↻")
-        ),
-        !loading && !connected ? h("p", { className: "muted small", style: { margin: "6px 0 0" } },
-          (data && data.error)
-            ? "Error: " + data.error
-            : "Make sure DISCORD_TOKEN is set in your .env file, the required packages are installed (pip install -r requirements.txt), and Account Analysis has been restarted."
-        ) : null
-      ),
+        <div>
+          <div className="status-pill">
+            <span className={"status-dot " + (connected ? "status-dot-on" : "status-dot-off")}></span>
+            <span className="status-text">{loading ? "Checking…" : connected ? "Discord Connected" : "Discord Disconnected"}</span>
+            <button
+              className={"icon-btn" + (loading ? " icon-btn-spin" : "")}
+              onClick={function () { load(); }} disabled={loading} title="Refresh connection status" type="button"
+            >↻</button>
+          </div>
+          {!loading && !connected ? (
+            <p className="muted small" style={{ margin: "6px 0 0" }}>
+              {(data && data.error)
+                ? "Error: " + data.error
+                : "Make sure DISCORD_TOKEN is set in your .env file, the required packages are installed (pip install -r requirements.txt), and Account Analysis has been restarted."}
+            </p>
+          ) : null}
+        </div>
 
-      h("div", { className: "workspace" },
-        h("aside", { className: "sidebar" },
-          h("div", { className: "sidebar-card" },
-            h("h2", { className: "sidebar-title" }, "Search Profiles"),
-            h("div", { className: "search-row" },
-              h("input", {
-                type: "text", className: "search-input-inline", placeholder: "Co Mary, John Smith (leave blank for all)",
-                value: searchInput,
-                onChange: function (e) { setSearchInput(e.target.value); },
-                onKeyDown: function (e) { if (e.key === "Enter") runSearch(); },
-              }),
-              h("button", { className: "btn btn-primary", onClick: runSearch, disabled: searching }, searchPhase === "scanning" ? "Scanning…" : searching ? "…" : "Search")
-            ),
-            h("p", { className: "panel-hint", style: { margin: 0 } }, "Comma-separated, partial names OK. Leave blank to search every profile. Search fetches new Discord messages for the date range first."),
-            searchNote ? h("p", { className: "muted small", style: { margin: 0 } }, searchNote) : null,
-            h("button", {
-              className: "btn dropdown-trigger", type: "button",
-              onClick: function () { setSearchDateDropdownOpen(!searchDateDropdownOpen); },
-            },
-              (searchAfter || searchBefore)
-                ? (formatDisplay(searchAfter) + " – " + (searchBefore ? formatDisplay(searchBefore) : "…"))
-                : "All history",
-              h("span", { className: "chevron" + (searchDateDropdownOpen ? " chevron-open" : "") }, "▾")
-            ),
-            searchDateDropdownOpen ? h(DateRangePicker, {
-              after: searchAfter, before: searchBefore,
-              onChange: function (a, b) { setSearchAfter(a); setSearchBefore(b); setSearchDateError(""); },
-              onDone: function () { setSearchDateDropdownOpen(false); },
-            }) : null,
-            searchDateError ? h("p", { className: "muted small", style: { margin: 0, color: "var(--stamp-cancel)" } }, searchDateError) : null,
-            searchResults && searchResults.error ? h("p", { className: "muted small", style: { margin: 0 } }, searchResults.error) : null
-          ),
-
-          h("div", { className: "sidebar-card" },
-            h("h2", { className: "sidebar-title" }, "Select Discord Channels"),
-            loading ? h("p", { className: "muted small", style: { margin: 0 } }, "Loading…")
-              : !connected ? h("p", { className: "muted small", style: { margin: 0 } }, "Not connected.")
-              : guilds.length === 0 ? h("p", { className: "muted small", style: { margin: 0 } }, "No accessible channels.")
-              : h(React.Fragment, null,
-                  h("button", {
-                    className: "btn dropdown-trigger",
-                    onClick: function () { setChannelDropdownOpen(!channelDropdownOpen); },
-                  },
-                    selected.size + " channel" + (selected.size === 1 ? "" : "s") + " selected",
-                    h("span", { className: "chevron" + (channelDropdownOpen ? " chevron-open" : "") }, "▾")
-                  ),
-                  channelDropdownOpen ? h("div", { className: "dropdown-panel scroll-box" },
-                    h("div", { className: "selector-actions" },
-                      h("button", { className: "btn btn-ghost", onClick: selectAll }, "Select All"),
-                      h("button", { className: "btn btn-ghost", onClick: clearAll }, "Clear All")
-                    ),
-                    guilds.map(function (g) {
-                      return h("div", { className: "guild-block", key: g.id },
-                        h("h3", { className: "guild-name" }, g.name),
-                        g.categories.map(function (cat) {
-                          return h(CategoryGroup, {
-                            key: cat.id, category: cat, selected: selected,
-                            onToggleChannel: toggleChannel, onToggleCategory: toggleCategory,
-                          });
-                        })
-                      );
-                    })
-                  ) : null,
-                  h("button", { className: "btn btn-primary btn-block", onClick: saveSelection, disabled: saving }, saving ? "Saving…" : "Save Selection"),
-                  saveStatus ? h("p", { className: "save-status", style: { margin: 0 } }, saveStatus) : null,
-                )
-          )
-        ),
-
-        h("div", { className: "main-results" },
-          searchResults && !searchResults.error ? h("section", { className: "card" },
-            h("h2", { className: "panel-title" }, "Search Results"),
-            Object.keys(searchResults.byStatus).length === 0
-              ? h("p", { className: "muted small", style: { margin: 0 } }, "No matching orders found.")
-              : h(React.Fragment, null,
-                  h("div", { className: "result-filter-row" },
-                    h("div", { className: "result-filter", ref: statusFilterRef },
-                      h("button", {
-                        className: "btn dropdown-trigger", type: "button",
-                        onClick: function () { setStatusFilterOpen(!statusFilterOpen); },
-                      },
-                        statusFilter.size + " of " + Object.keys(searchResults.byStatus).length + " statuses",
-                        h("span", { className: "chevron" + (statusFilterOpen ? " chevron-open" : "") }, "▾")
-                      ),
-                      statusFilterOpen ? h("div", { className: "dropdown-panel scroll-box" },
-                        h("div", { className: "selector-actions" },
-                          h("button", { className: "btn btn-ghost", onClick: function () { setStatusFilter(new Set(Object.keys(searchResults.byStatus))); } }, "Select All"),
-                          h("button", { className: "btn btn-ghost", onClick: function () { setStatusFilter(new Set()); } }, "Clear All")
-                        ),
-                        Object.keys(searchResults.byStatus).map(function (status) {
-                          var colorKey = statusColorKey(status) || "neutral";
-                          return h("label", { className: "filter-option", key: status },
-                            h("input", { type: "checkbox", checked: statusFilter.has(status), onChange: function () { toggleStatusFilter(status); } }),
-                            h("span", { className: "status-color-dot status-color-" + colorKey }),
-                            status + " (" + searchResults.byStatus[status].length + ")"
-                          );
-                        })
-                      ) : null
-                    ),
-                    lastSearchTerms.length > 0 ? h("div", { className: "result-filter", ref: categoryFilterRef },
-                      h("button", {
-                        className: "btn dropdown-trigger", type: "button",
-                        onClick: function () { setCategoryFilterOpen(!categoryFilterOpen); },
-                      },
-                        categoryFilter.size + " of " + lastSearchTerms.length + " keywords",
-                        h("span", { className: "chevron" + (categoryFilterOpen ? " chevron-open" : "") }, "▾")
-                      ),
-                      categoryFilterOpen ? h("div", { className: "dropdown-panel scroll-box" },
-                        h("div", { className: "selector-actions" },
-                          h("button", { className: "btn btn-ghost", onClick: function () { setCategoryFilter(new Set(lastSearchTerms)); } }, "Select All"),
-                          h("button", { className: "btn btn-ghost", onClick: function () { setCategoryFilter(new Set()); } }, "Clear All")
-                        ),
-                        lastSearchTerms.map(function (term) {
-                          return h("label", { className: "filter-option", key: term },
-                            h("input", { type: "checkbox", checked: categoryFilter.has(term), onChange: function () { toggleCategoryFilter(term); } }),
-                            term + " (" + (categoryCounts[term] || 0) + ")"
-                          );
-                        })
-                      ) : null
-                    ) : null,
-                    h("div", { className: "result-filter", ref: channelFilterRef },
-                      h("button", {
-                        className: "btn dropdown-trigger", type: "button",
-                        onClick: function () { setChannelFilterOpen(!channelFilterOpen); },
-                      },
-                        channelFilter.size + " of " + allChannels.length + " channels",
-                        h("span", { className: "chevron" + (channelFilterOpen ? " chevron-open" : "") }, "▾")
-                      ),
-                      channelFilterOpen ? h("div", { className: "dropdown-panel scroll-box" },
-                        h("div", { className: "selector-actions" },
-                          h("button", { className: "btn btn-ghost", onClick: function () { setChannelFilter(new Set(allChannels)); } }, "Select All"),
-                          h("button", { className: "btn btn-ghost", onClick: function () { setChannelFilter(new Set()); } }, "Clear All")
-                        ),
-                        allChannels.map(function (channelName) {
-                          return h("label", { className: "filter-option", key: channelName },
-                            h("input", { type: "checkbox", checked: channelFilter.has(channelName), onChange: function () { toggleChannelFilter(channelName); } }),
-                            "#" + channelName + " (" + (channelCounts[channelName] || 0) + ")"
-                          );
-                        })
-                      ) : null
-                    )
-                  ),
-                  Object.keys(jigBreakdown).length > 0 ? h("div", { className: "status-group" },
-                    h("div", { className: "status-group-header" }, "Jig Breakdown"),
-                    Object.keys(jigBreakdown).sort().map(function (category) {
-                      var jigs = jigBreakdown[category];
-                      return h("div", { key: category, style: { display: "flex", flexDirection: "column", gap: "4px" } },
-                        h("div", { className: "jig-category-name" }, category),
-                        Object.keys(jigs).sort().map(function (jigName) {
-                          var counts = jigs[jigName];
-                          return h("div", { className: "jig-row", key: jigName },
-                            h("div", { className: "jig-stats" },
-                              Object.keys(counts).sort().map(function (status) {
-                                var colorKey = statusColorKey(status) || "neutral";
-                                return h("div", { className: "jig-stat-line jig-stat-" + colorKey, key: status },
-                                  h("span", { className: "jig-stat-status" },
-                                    h("span", { className: "jig-name" }, jigName), ": ", status
-                                  ),
-                                  h("span", { className: "jig-stat-count" }, "(" + counts[status] + ")")
+        <div className="workspace">
+          <aside className="sidebar">
+            <div className="sidebar-card">
+              <h2 className="sidebar-title">Select Discord Channels</h2>
+              {loading ? <p className="muted small" style={{ margin: 0 }}>Loading…</p>
+                : !connected ? <p className="muted small" style={{ margin: 0 }}>Not connected.</p>
+                : guilds.length === 0 ? <p className="muted small" style={{ margin: 0 }}>No accessible channels.</p>
+                : (
+                  <React.Fragment>
+                    <button
+                      className="btn dropdown-trigger"
+                      onClick={function () { setChannelDropdownOpen(!channelDropdownOpen); }}
+                    >
+                      {selected.size + " channel" + (selected.size === 1 ? "" : "s") + " selected"}
+                      <span className={"chevron" + (channelDropdownOpen ? " chevron-open" : "")}>▾</span>
+                    </button>
+                    {channelDropdownOpen ? (
+                      <div className="dropdown-panel scroll-box">
+                        <div className="selector-actions">
+                          <button className="btn btn-ghost" onClick={selectAll}>Select All</button>
+                          <button className="btn btn-ghost" onClick={clearAll}>Clear All</button>
+                        </div>
+                        {guilds.map(function (g) {
+                          return (
+                            <div className="guild-block" key={g.id}>
+                              <h3 className="guild-name">{g.name}</h3>
+                              {g.categories.map(function (cat) {
+                                return (
+                                  <CategoryGroup
+                                    key={cat.id} category={cat} selected={selected}
+                                    onToggleChannel={toggleChannel} onToggleCategory={toggleCategory}
+                                  />
                                 );
-                              })
-                            )
+                              })}
+                            </div>
                           );
-                        })
+                        })}
+                      </div>
+                    ) : null}
+                    <button className="btn btn-primary btn-block" onClick={saveSelection} disabled={saving}>{saving ? "Saving…" : "Save Selection"}</button>
+                    {saveStatus ? <p className="save-status" style={{ margin: 0 }}>{saveStatus}</p> : null}
+                  </React.Fragment>
+                )}
+            </div>
+
+            {searchResults && !searchResults.error && searchResults.ordersPerProxyHost && Object.keys(searchResults.ordersPerProxyHost).length > 0 ? (
+              <div className="sidebar-card">
+                <h2 className="sidebar-title">Proxy Speed</h2>
+                <p className="panel-hint" style={{ margin: 0 }}>Orders captured per provider, any status.</p>
+                <div className="proxy-chart">
+                  {(function () {
+                    var hosts = Object.keys(searchResults.ordersPerProxyHost);
+                    var maxCount = Math.max.apply(null, hosts.map(function (h) { return searchResults.ordersPerProxyHost[h]; }));
+                    return hosts.map(function (host, i) {
+                      var count = searchResults.ordersPerProxyHost[host];
+                      var pct = maxCount > 0 ? Math.max(4, Math.round((count / maxCount) * 100)) : 0;
+                      return (
+                        <div className="proxy-bar-row" key={host}>
+                          <span className="proxy-bar-label" title={host}>{(i + 1) + ". " + host}</span>
+                          <div className="proxy-bar-track-row">
+                            <div className="proxy-bar-track">
+                              <div className="proxy-bar-fill" style={{ width: pct + "%" }}></div>
+                            </div>
+                            <span className="proxy-bar-count">{count}</span>
+                          </div>
+                        </div>
                       );
-                    })
-                  ) : null,
-                  h("div", { className: "scan-progress" },
-                    Object.keys(searchResults.byStatus).filter(function (status) { return statusFilter.has(status); }).map(function (status) {
-                      var profiles = searchResults.byStatus[status].filter(function (p) {
-                        // No search keywords (search-all) means there are no
-                        // categories to filter by - every profile passes.
-                        var matchesCategory = lastSearchTerms.length === 0 ||
-                          profileCategories(p).some(function (term) { return categoryFilter.has(term); });
-                        return matchesCategory && profileChannels(p).some(function (ch) { return channelFilter.has(ch); });
-                      });
-                      if (!profiles.length) return null;
-                      var colorKey = statusColorKey(status) || "neutral";
-                      return h("div", { className: "status-group status-group-" + colorKey, key: status },
-                        h("div", { className: "status-group-header-row" },
-                          h("div", { className: "status-group-header" }, status + " (" + profiles.length + ")"),
-                          h("div", { className: "status-group-header-actions" },
-                            copyStatus[status] ? h("span", { className: "muted small" }, copyStatus[status]) : null,
-                            h("button", {
-                              type: "button", className: "btn btn-ghost small",
-                              onClick: function () { copyProfiles(status, profiles); },
-                            }, "Copy")
-                          )
-                        ),
-                        h("div", { className: "profile-chip-row" },
-                          profiles.map(function (p) {
-                            return h("span", { key: p, className: "profile-chip" }, p);
-                          })
-                        )
-                      );
-                    })
-                  )
+                    });
+                  })()}
+                </div>
+              </div>
+            ) : null}
+          </aside>
+
+          <div className="main-results">
+            <div className="card">
+              <h2 className="panel-title">Search Profiles</h2>
+              <div className="search-row">
+                <input
+                  type="text" className="search-input-inline" placeholder="Co Mary, John Smith (leave blank for all)"
+                  value={searchInput}
+                  onChange={function (e) { setSearchInput(e.target.value); }}
+                  onKeyDown={function (e) { if (e.key === "Enter") runSearch(); }}
+                />
+                <button className="btn btn-primary" onClick={runSearch} disabled={searching}>{searchPhase === "scanning" ? "Scanning…" : searching ? "…" : "Search"}</button>
+              </div>
+              <p className="panel-hint" style={{ margin: 0 }}>Comma-separated, partial names OK. Leave blank to search every profile. Search fetches new Discord messages for the date range first.</p>
+              {searchNote ? <p className="muted small" style={{ margin: 0 }}>{searchNote}</p> : null}
+              <div className="date-picker-wrap">
+                <button
+                  className="btn dropdown-trigger" type="button"
+                  onClick={function () { setSearchDateDropdownOpen(!searchDateDropdownOpen); }}
+                >
+                  {(searchAfter || searchBefore)
+                    ? (formatDisplay(searchAfter) + " – " + (searchBefore ? formatDisplay(searchBefore) : "…"))
+                    : "All history"}
+                  <span className={"chevron" + (searchDateDropdownOpen ? " chevron-open" : "")}>▾</span>
+                </button>
+                {searchDateDropdownOpen ? (
+                  <DateRangePicker
+                    after={searchAfter} before={searchBefore}
+                    onChange={function (a, b) { setSearchAfter(a); setSearchBefore(b); setSearchDateError(""); }}
+                    onDone={function () { setSearchDateDropdownOpen(false); }}
+                  />
+                ) : null}
+              </div>
+              {searchDateError ? <p className="muted small" style={{ margin: 0, color: "var(--stamp-cancel)" }}>{searchDateError}</p> : null}
+              {searchResults && searchResults.error ? <p className="muted small" style={{ margin: 0 }}>{searchResults.error}</p> : null}
+              {searchResults && searchResults.countPerSearchTerm && Object.values(searchResults.countPerSearchTerm).some(function (n) { return n === 0; })
+                ? (
+                  <p className="muted small" style={{ margin: 0, color: "var(--stamp-cancel)" }}>
+                    {"⚠ matched 0 orders: " + Object.keys(searchResults.countPerSearchTerm)
+                      .filter(function (term) { return searchResults.countPerSearchTerm[term] === 0; })
+                      .map(function (term) { return "\"" + term + "\""; }).join(", ")}
+                  </p>
                 )
-          ) : null,
+                : null}
+            </div>
 
-          !searchResults ? h("div", { className: "empty-state" },
-            "Search a profile or run a scan to see results here."
-          ) : null
-        )
-      ),
+            {searchResults && !searchResults.error ? (
+              <section className="card">
+                <h2 className="panel-title">Search Results</h2>
+                {Object.keys(searchResults.profilesPerStatus).length === 0
+                  ? <p className="muted small" style={{ margin: 0 }}>No matching orders found.</p>
+                  : (
+                    <React.Fragment>
+                      <div className="result-filter-row">
+                        <input
+                          type="search" className="jig-search-input" placeholder="Search jig…"
+                          value={jigSearch} onChange={function (e) { setJigSearch(e.target.value); }}
+                          aria-label="Search by jig name"
+                        />
+                        <div className="result-filter" ref={statusFilterRef}>
+                          <button
+                            className="btn dropdown-trigger" type="button"
+                            onClick={function () { setStatusFilterOpen(!statusFilterOpen); }}
+                          >
+                            {statusFilter.size + " of " + Object.keys(searchResults.profilesPerStatus).length + " statuses"}
+                            <span className={"chevron" + (statusFilterOpen ? " chevron-open" : "")}>▾</span>
+                          </button>
+                          {statusFilterOpen ? (
+                            <div className="dropdown-panel scroll-box">
+                              <div className="selector-actions">
+                                <button className="btn btn-ghost" onClick={function () { setStatusFilter(new Set(Object.keys(searchResults.profilesPerStatus))); }}>Select All</button>
+                                <button className="btn btn-ghost" onClick={function () { setStatusFilter(new Set()); }}>Clear All</button>
+                              </div>
+                              {Object.keys(searchResults.profilesPerStatus).map(function (status) {
+                                var colorKey = statusColorKey(status) || "neutral";
+                                return (
+                                  <label className="filter-option" key={status}>
+                                    <input type="checkbox" checked={statusFilter.has(status)} onChange={function () { toggleStatusFilter(status); }} />
+                                    <span className={"status-color-dot status-color-" + colorKey}></span>
+                                    {status + " (" + searchResults.profilesPerStatus[status].length + ")"}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+                        </div>
+                        {lastSearchTerms.length > 0 ? (
+                          <div className="result-filter" ref={categoryFilterRef}>
+                            <button
+                              className="btn dropdown-trigger" type="button"
+                              onClick={function () { setCategoryFilterOpen(!categoryFilterOpen); }}
+                            >
+                              {categoryFilter.size + " of " + lastSearchTerms.length + " keywords"}
+                              <span className={"chevron" + (categoryFilterOpen ? " chevron-open" : "")}>▾</span>
+                            </button>
+                            {categoryFilterOpen ? (
+                              <div className="dropdown-panel scroll-box">
+                                <div className="selector-actions">
+                                  <button className="btn btn-ghost" onClick={function () { setCategoryFilter(new Set(lastSearchTerms)); }}>Select All</button>
+                                  <button className="btn btn-ghost" onClick={function () { setCategoryFilter(new Set()); }}>Clear All</button>
+                                </div>
+                                {lastSearchTerms.map(function (term) {
+                                  return (
+                                    <label className="filter-option" key={term}>
+                                      <input type="checkbox" checked={categoryFilter.has(term)} onChange={function () { toggleCategoryFilter(term); }} />
+                                      {term + " (" + (categoryCounts[term] || 0) + ")"}
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        <div className="result-filter" ref={channelFilterRef}>
+                          <button
+                            className="btn dropdown-trigger" type="button"
+                            onClick={function () { setChannelFilterOpen(!channelFilterOpen); }}
+                          >
+                            {channelFilter.size + " of " + allChannels.length + " channels"}
+                            <span className={"chevron" + (channelFilterOpen ? " chevron-open" : "")}>▾</span>
+                          </button>
+                          {channelFilterOpen ? (
+                            <div className="dropdown-panel scroll-box">
+                              <div className="selector-actions">
+                                <button className="btn btn-ghost" onClick={function () { setChannelFilter(new Set(allChannels)); }}>Select All</button>
+                                <button className="btn btn-ghost" onClick={function () { setChannelFilter(new Set()); }}>Clear All</button>
+                              </div>
+                              {allChannels.map(function (channelName) {
+                                return (
+                                  <label className="filter-option" key={channelName}>
+                                    <input type="checkbox" checked={channelFilter.has(channelName)} onChange={function () { toggleChannelFilter(channelName); }} />
+                                    {"#" + channelName + " (" + (channelCounts[channelName] || 0) + ")"}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      {Object.keys(jigBreakdown).length > 0 ? (
+                        <div className="status-group">
+                          <div className="status-group-header">Jig Breakdown</div>
+                          {Object.keys(jigBreakdown).sort().map(function (category) {
+                            var jigs = jigBreakdown[category];
+                            return (
+                              <div key={category} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <div className="jig-category-name">{category || "All Profiles"}</div>
+                                {Object.keys(jigs).sort().map(function (jigName) {
+                                  var counts = jigs[jigName];
+                                  return (
+                                    <div className="jig-row" key={jigName}>
+                                      <div className="jig-stats">
+                                        {Object.keys(counts).sort().map(function (status) {
+                                          var colorKey = statusColorKey(status) || "neutral";
+                                          return (
+                                            <div className={"jig-stat-line jig-stat-" + colorKey} key={status}>
+                                              <span className="jig-stat-status">
+                                                <span className="jig-name">{jigName}</span>: {status}
+                                              </span>
+                                              <span className="jig-stat-count">{"(" + counts[status] + ")"}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                      <div className="scan-progress">
+                        {Object.keys(searchResults.profilesPerStatus).filter(function (status) { return statusFilter.has(status); }).map(function (status) {
+                          var profiles = searchResults.profilesPerStatus[status].filter(function (p) {
+                            var matchesCategory = lastSearchTerms.length === 0 ||
+                              profileCategories(p).some(function (term) { return categoryFilter.has(term); });
+                            return matchesCategory && profileChannels(p).some(function (ch) { return channelFilter.has(ch); }) && matchesJigSearch(p);
+                          });
+                          if (!profiles.length) return null;
+                          var colorKey = statusColorKey(status) || "neutral";
+                          return (
+                            <div className={"status-group status-group-" + colorKey} key={status}>
+                              <div className="status-group-header-row">
+                                <div className="status-group-header">{status + " (" + profiles.length + ")"}</div>
+                                <div className="status-group-header-actions">
+                                  {copyStatus[status] ? <span className="muted small">{copyStatus[status]}</span> : null}
+                                  <button
+                                    type="button" className="btn btn-ghost small"
+                                    onClick={function () { copyProfiles(status, profiles); }}
+                                  >Copy</button>
+                                </div>
+                              </div>
+                              <div className="profile-chip-row">
+                                {profiles.map(function (p) {
+                                  return <span key={p} className="profile-chip">{p}</span>;
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </React.Fragment>
+                  )}
+              </section>
+            ) : null}
 
-      h("footer", { className: "footer-note" }, "Discord data stays local to this machine, in database/order_ledger.db."),
+            {!searchResults ? <div className="empty-state">Search a profile or run a scan to see results here.</div> : null}
+          </div>
+        </div>
 
-      toastVisible && scanProgress ? h("div", { className: "toast-wrap card" + (toastLeaving ? " toast-leaving" : "") },
-        h("h2", { className: "panel-title" }, "Scan Progress"),
-        h(ScanProgress, { progress: scanProgress })
-      ) : null
+        <footer className="footer-note">Discord data stays local to this machine, in memory only - nothing is saved, so it's gone when the app restarts.</footer>
+
+        {toastVisible && scanProgress ? (
+          <div className={"toast-wrap card" + (toastLeaving ? " toast-leaving" : "")}>
+            <h2 className="panel-title">Scan Progress</h2>
+            <ScanProgress
+              progress={scanProgress}
+              selectedChannels={Array.from(selected).map(function (id) { return { id: id, name: channelNamesById(guilds)[id] || id }; })}
+            />
+          </div>
+        ) : null}
+      </div>
     );
   }
 
   var rootEl = document.getElementById("root");
-  ReactDOM.createRoot(rootEl).render(h(App));
+  ReactDOM.createRoot(rootEl).render(<App />);
 })();
 </script>

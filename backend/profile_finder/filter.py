@@ -1,13 +1,15 @@
 """
 Read a profile-export CSV and split its rows into two new CSVs: rows whose
-Email Address is in a list you give it ("matches"), and every other row
-("rest"). Both keep all original columns.
+Email Address OR Profile Name is in a list you give it ("matches"), and
+every other row ("rest"). Both keep all original columns.
 
 Usage:
     python backend/profile_finder/filter.py --csv profiles.csv --emails emails.txt
     python backend/profile_finder/filter.py --csv profiles.csv --emails emails.txt --out matches.csv --out-rest rest.csv
 
---emails points to a text file with one email per line (commas also work).
+--emails points to a text file with one entry per line (commas also work) -
+each entry can be an email address or a profile name, mixed freely; a row
+matches if either of its own Email Address or Profile Name is in the list.
 No UI yet - this is the plain script, run it directly to check the logic.
 """
 import argparse
@@ -17,28 +19,38 @@ import sys
 from pathlib import Path
 
 EMAIL_COLUMN_CANDIDATES = ["email address", "email", "source email", "e-mail"]
+PROFILE_COLUMN_CANDIDATES = ["profile name", "profile"]
 
 
-def find_email_column(fieldnames):
+def find_column(fieldnames, candidates):
     norm = {(fn or "").strip().lower(): fn for fn in fieldnames}
-    for candidate in EMAIL_COLUMN_CANDIDATES:
+    for candidate in candidates:
         if candidate in norm:
             return norm[candidate]
     return None
 
 
+def find_email_column(fieldnames):
+    return find_column(fieldnames, EMAIL_COLUMN_CANDIDATES)
+
+
+def find_profile_column(fieldnames):
+    return find_column(fieldnames, PROFILE_COLUMN_CANDIDATES)
+
+
 def parse_wanted_emails(text):
-    """Emails to look for, as {lowercased: original spelling}. Order of
-    first appearance is kept so the "not found" report reads naturally.
-    Pure (no file access) so the web UI can reuse it on pasted text."""
+    """Entries to look for (each an email OR a profile name), as
+    {lowercased: original spelling}. Order of first appearance is kept so
+    the "not found" report reads naturally. Pure (no file access) so the
+    web UI can reuse it on pasted text."""
     wanted = {}
     for chunk in (text or "").replace(",", "\n").replace(";", "\n").splitlines():
-        email = chunk.strip()
-        if not email:
+        entry = chunk.strip()
+        if not entry:
             continue
-        key = email.lower()
+        key = entry.lower()
         if key not in wanted:
-            wanted[key] = email
+            wanted[key] = entry
     return wanted
 
 
@@ -48,25 +60,33 @@ def load_wanted_emails(path):
 
 def filter_rows(csv_text, wanted):
     """Reads csv_text once and returns (fieldnames, matched_rows, rest_rows,
-    seen_counts). Every row goes to exactly one of matched_rows/rest_rows,
-    in the file's original order - no re-sorting, no re-grouping, so a row
-    can never appear more than once, or in both outputs.
-    Pure (no file access) so the web UI hits the exact same code as the CLI."""
+    seen_counts). A row matches if its Email Address OR its Profile Name is
+    in `wanted` (either column is optional - whichever one the CSV has is
+    used; if the CSV has neither, that's an error). Every row goes to
+    exactly one of matched_rows/rest_rows, in the file's original order -
+    no re-sorting, no re-grouping, so a row can never appear more than
+    once, or in both outputs. Pure (no file access) so the web UI hits the
+    exact same code as the CLI."""
     reader = csv.DictReader(io.StringIO(csv_text))
     fieldnames = reader.fieldnames or []
     email_col = find_email_column(fieldnames)
-    if email_col is None:
-        raise ValueError(f"No email column found. Columns present: {fieldnames}")
+    profile_col = find_profile_column(fieldnames)
+    if email_col is None and profile_col is None:
+        raise ValueError(f"No Email Address or Profile Name column found. Columns present: {fieldnames}")
 
     matched_rows = []
     rest_rows = []
-    seen_counts = {}  # lowercased email -> how many rows in the SOURCE file matched it
+    seen_counts = {}  # lowercased email/profile name -> how many rows in the SOURCE file matched it
     for row in reader:
-        email = (row.get(email_col) or "").strip()
-        key = email.lower()
-        if email and key in wanted:
+        email = (row.get(email_col) or "").strip() if email_col else ""
+        profile = (row.get(profile_col) or "").strip() if profile_col else ""
+        email_key, profile_key = email.lower(), profile.lower()
+        if email and email_key in wanted:
             matched_rows.append(row)
-            seen_counts[key] = seen_counts.get(key, 0) + 1
+            seen_counts[email_key] = seen_counts.get(email_key, 0) + 1
+        elif profile and profile_key in wanted:
+            matched_rows.append(row)
+            seen_counts[profile_key] = seen_counts.get(profile_key, 0) + 1
         else:
             rest_rows.append(row)
 
@@ -93,7 +113,7 @@ def write_csv(out_path, fieldnames, rows):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--csv", required=True, help="the profile-export CSV to filter")
-    ap.add_argument("--emails", required=True, help="text file with one email per line")
+    ap.add_argument("--emails", required=True, help="text file, one email or profile name per line")
     ap.add_argument("--out", help="matches CSV path (default: <csv>-matches.csv next to the input)")
     ap.add_argument("--out-rest", help="everything-else CSV path (default: <csv>-rest.csv next to the input)")
     args = ap.parse_args()
@@ -109,7 +129,7 @@ def main():
 
     wanted = load_wanted_emails(emails_path)
     if not wanted:
-        print("No emails found in --emails file.")
+        print("No emails or profile names found in --emails file.")
         sys.exit(1)
 
     fieldnames, matched_rows, rest_rows, seen_counts = filter_csv(csv_path, wanted)
@@ -123,15 +143,15 @@ def main():
     not_found = [original for key, original in wanted.items() if key not in seen_counts]
     duplicated = [(wanted[key], count) for key, count in seen_counts.items() if count > 1]
 
-    print(f"Emails listed:   {len(wanted)}")
+    print(f"Entries listed:  {len(wanted)}")
     print(f"Found:           {len(found)}")
     print(f"Not found:       {len(not_found)}")
     print(f"Matches written: {len(matched_rows)}  ->  {out_path}")
     print(f"Rest written:    {len(rest_rows)}  ->  {rest_path}")
     if duplicated:
-        print(f"\n{len(duplicated)} email(s) matched more than one row in the CSV:")
-        for email, count in duplicated:
-            print(f"  {email}: {count} rows")
+        print(f"\n{len(duplicated)} entry/entries matched more than one row in the CSV:")
+        for entry, count in duplicated:
+            print(f"  {entry}: {count} rows")
     if not_found:
         print(f"\nNot found in {csv_path.name}:")
         for email in not_found:
