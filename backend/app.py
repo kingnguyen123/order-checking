@@ -35,6 +35,20 @@ except Exception as e:
     discord_service = None
     print(f"Discord integration unavailable ({e}). Install with: pip install -r requirements.txt")
 
+try:
+    from proxy_tester.service import ProxyTestService
+    proxy_test_service = ProxyTestService()
+except ImportError as e:
+    proxy_test_service = None
+    print(f"Proxy Tester unavailable ({e}). Install with: pip install -r requirements.txt")
+
+try:
+    from speed_checker.service import SpeedCheckService
+    speed_check_service = SpeedCheckService()
+except ImportError as e:
+    speed_check_service = None
+    print(f"Speed Check unavailable ({e}). Install with: pip install -r requirements.txt")
+
 HOST = "0.0.0.0"          # listen on every network interface, so other devices on the same LAN can reach it
 LOCAL_HOST = "127.0.0.1"  # what this machine itself uses - for the port-availability check and auto-opened browser
 DEFAULT_PORT = 8000
@@ -44,6 +58,8 @@ FRONTEND_DIR = PROJECT_ROOT / "frontend"
 FRONTEND_FILE = FRONTEND_DIR / "index.html"
 PROFILE_FINDER_FILE = FRONTEND_DIR / "profile-finder.html"
 ACCOUNT_FINDER_FILE = FRONTEND_DIR / "account-finder.html"
+PROXY_TESTER_FILE = FRONTEND_DIR / "proxy-tester.html"
+SPEED_CHECKER_FILE = FRONTEND_DIR / "speed-checker.html"
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -66,6 +82,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._serve_page(PROFILE_FINDER_FILE)
         elif self.path in ("/account-finder", "/account-finder.html"):
             self._serve_page(ACCOUNT_FINDER_FILE)
+        elif self.path in ("/proxy-tester", "/proxy-tester.html"):
+            self._serve_page(PROXY_TESTER_FILE)
+        elif self.path.startswith("/api/proxy-tester/jobs/"):
+            self._handle_proxy_test_progress(self.path[len("/api/proxy-tester/jobs/"):])
+        elif self.path in ("/speed-checker", "/speed-checker.html"):
+            self._serve_page(SPEED_CHECKER_FILE)
+        elif self.path.startswith("/api/speed-checker/jobs/"):
+            self._handle_speed_check_progress(self.path[len("/api/speed-checker/jobs/"):])
         elif self.path == "/api/discord/channels":
             self._handle_discord_channels()
         elif self.path == "/api/discord/search-terms":
@@ -99,6 +123,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._handle_profile_finder_filter()
         elif self.path == "/api/account-finder/filter":
             self._handle_account_finder_filter()
+        elif self.path == "/api/proxy-tester/jobs":
+            self._handle_proxy_test_start()
+        elif self.path.startswith("/api/proxy-tester/jobs/") and self.path.endswith("/stop"):
+            self._handle_proxy_test_stop(self.path[len("/api/proxy-tester/jobs/"):-len("/stop")])
+        elif self.path == "/api/speed-checker/jobs":
+            self._handle_speed_check_start()
+        elif self.path.startswith("/api/speed-checker/jobs/") and self.path.endswith("/stop"):
+            self._handle_speed_check_stop(self.path[len("/api/speed-checker/jobs/"):-len("/stop")])
         else:
             self.send_error(404)
 
@@ -311,6 +343,88 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """GET - the last-used search keywords, to prefill the search box."""
         self._send_json(200, {"terms": discord_store.get_search_terms()})
 
+    def _handle_proxy_test_start(self):
+        """POST {proxies, threads, timeout, downloadMb, targetUrl, targetText,
+        targetAttempts} - start a background test and return its id. downloadMb
+        null skips the speed test, targetUrl null skips the site check."""
+        payload = self._read_json()
+        if payload is None:
+            return
+        if proxy_test_service is None:
+            self._send_json(503, {"error": "Proxy Tester needs the requests package. Run: pip install -r requirements.txt"})
+            return
+        try:
+            job = proxy_test_service.start(
+                str(payload.get("proxies") or ""),
+                threads=payload.get("threads", 20),
+                timeout=payload.get("timeout", 10),
+                download_mb=payload.get("downloadMb", 10),
+                target_url=payload.get("targetUrl"),
+                target_text=str(payload.get("targetText") or ""),
+                target_attempts=payload.get("targetAttempts", 3),
+            )
+        except (TypeError, ValueError) as e:
+            self._send_json(400, {"error": str(e)})
+            return
+        self._send_json(200, {"jobId": job.id})
+
+    def _handle_proxy_test_progress(self, job_id):
+        """GET - progress and ranked results so far (the page polls this)."""
+        progress = proxy_test_service.progress(job_id) if proxy_test_service else None
+        if progress is None:
+            self._send_json(404, {"error": "Unknown job"})
+            return
+        self._send_json(200, progress)
+
+    def _handle_proxy_test_stop(self, job_id):
+        """POST - skip the proxies still queued in a running test."""
+        # Unread body bytes would corrupt the next request on this keep-alive connection
+        if self._read_json() is None:
+            return
+        if proxy_test_service is None or not proxy_test_service.stop(job_id):
+            self._send_json(404, {"error": "Unknown job"})
+            return
+        self._send_json(200, {"stopping": True})
+
+    def _handle_speed_check_start(self):
+        """POST {proxies, url, timeout, threshold, concurrency} - start a background
+        speed check and return its id."""
+        payload = self._read_json()
+        if payload is None:
+            return
+        if speed_check_service is None:
+            self._send_json(503, {"error": "Speed Check needs the aiohttp package. Run: pip install -r requirements.txt"})
+            return
+        try:
+            job = speed_check_service.start(
+                str(payload.get("proxies") or ""),
+                url=str(payload.get("url") or ""),
+                timeout=payload.get("timeout", 5),
+                threshold=payload.get("threshold", 1000),
+                concurrency=payload.get("concurrency", 100),
+            )
+        except (TypeError, ValueError) as e:
+            self._send_json(400, {"error": str(e)})
+            return
+        self._send_json(200, {"jobId": job.id})
+
+    def _handle_speed_check_progress(self, job_id):
+        """GET - progress and sorted results so far (the page polls this)."""
+        progress = speed_check_service.progress(job_id) if speed_check_service else None
+        if progress is None:
+            self._send_json(404, {"error": "Unknown job"})
+            return
+        self._send_json(200, progress)
+
+    def _handle_speed_check_stop(self, job_id):
+        """POST - skip the proxies still queued in a running speed check."""
+        if self._read_json() is None:   # drain the body so the keep-alive connection stays usable
+            return
+        if speed_check_service is None or not speed_check_service.stop(job_id):
+            self._send_json(404, {"error": "Unknown job"})
+            return
+        self._send_json(200, {"stopping": True})
+
     def log_message(self, fmt, *args):
         print(f"  {self.address_string()} - {fmt % args}")
 
@@ -377,6 +491,10 @@ def main():
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
+        if proxy_test_service is not None:
+            proxy_test_service.stop_all()   # otherwise exit waits for every queued proxy
+        if speed_check_service is not None:
+            speed_check_service.stop_all()
         server.shutdown()
 
 

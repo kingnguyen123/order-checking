@@ -1,5 +1,9 @@
-# Only needed for the optional Discord Order Analysis feature.
+# Only needed for the optional Discord Order Analysis and Proxy Tester features.
 # The original CSV analysis (app.py, analyze_orders.py, order_analysis.py)
 # uses only the Python standard library and works without these installed.
 discord.py>=2.3.0
 python-dotenv>=1.0.0
+requests[socks]>=2.31.0
+
+# Speed Check page (tools/proxy_speed_checker)
+aiohttp>=3.8

@@ -68,7 +68,7 @@
   .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
   .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
 
-  .page-nav { display: flex; gap: 8px; }
+  .page-nav { display: flex; gap: 8px; flex-wrap: wrap; }
   .page-nav-link {
     font-family: var(--font-body); font-weight: 600; font-size: 13px;
     padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border);
@@ -143,8 +143,8 @@
 
   .analysis { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
-  .stat-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 4px; }
-  @media (max-width: 1000px) { .stat-row { grid-template-columns: repeat(3, 1fr); } }
+  .stat-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; margin-bottom: 4px; }
+  @media (max-width: 1000px) { .stat-row { grid-template-columns: repeat(4, 1fr); } }
   @media (max-width: 700px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
   .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; }
   .stat-value { font-family: var(--font-display); font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -153,6 +153,26 @@
   .stat-cancel .stat-value { color: var(--stamp-cancel); }
   .stat-both .stat-value { color: var(--stamp-both); }
   .stat-good .stat-value { color: var(--stamp-good); }
+  .stat-risk .stat-value { color: var(--stamp-cancel); }
+
+  .cohort-panel { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .cohort-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .cohort-inputs { grid-template-columns: 1fr; } }
+  .cohort-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .cohort-field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; font-weight: 600; }
+  .cohort-textarea {
+    width: 100%; min-height: 96px; resize: vertical; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg-input); color: var(--ink); font-family: var(--font-mono); font-size: 12px; line-height: 1.5;
+  }
+  .cohort-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .cohort-table th, .cohort-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .cohort-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); font-weight: 600; }
+  .cohort-table td.cohort-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .cohort-better { color: var(--stamp-success); font-weight: 600; }
+  .cohort-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cohort-actions { display: flex; align-items: center; gap: 8px; }
+  .tag-cohort-new { background: var(--stamp-new-bg); color: var(--stamp-new); }
+  .tag-cohort-old { background: var(--stamp-both-bg); color: var(--stamp-both); }
 
   .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin: 14px 0; }
   .search-input {
@@ -167,30 +187,15 @@
   .chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-muted); font-size: 12.5px; cursor: pointer; font-family: var(--font-body); }
   .chip-active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
   .chip-good.chip-active { background: var(--stamp-good); border-color: var(--stamp-good); color: var(--accent-contrast); }
+  .chip-risk.chip-active { background: var(--stamp-cancel); border-color: var(--stamp-cancel); color: var(--accent-contrast); }
   .toolbar-export { display: flex; align-items: center; gap: 10px; }
   .export-status { font-size: 12px; color: var(--ink-muted); }
-
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex;
-    align-items: center; justify-content: center; z-index: 50; padding: 20px;
-  }
-  .modal-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 20px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 14px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  }
-  .modal-title { font-family: var(--font-display); font-weight: 700; font-size: 17px; margin: 0; }
-  .modal-hint { font-size: 12.5px; color: var(--ink-muted); margin: -8px 0 0; }
-  .modal-columns { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; }
-  .modal-column-option { display: flex; align-items: center; gap: 8px; padding: 6px 2px; font-size: 13px; cursor: pointer; }
-  .modal-column-actions { display: flex; gap: 8px; }
-  .modal-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
   .table-wrap {
     overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
     max-height: 76vh;
   }
-  .ledger-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 920px; }
+  .ledger-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13.5px; min-width: 1300px; }
   .ledger-table thead th {
     position: sticky; top: 0; z-index: 1;
     text-align: left; padding: 10px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border);
@@ -202,7 +207,7 @@
   .data-row:hover { background: var(--surface-2); }
   .data-row td { padding: 10px 12px; vertical-align: top; }
   .cell-email { font-family: var(--font-mono); font-size: 12.5px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cell-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .cell-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: left; }
   .cell-date { font-family: var(--font-mono); color: var(--ink-muted); white-space: nowrap; font-size: 12px; }
   .expand-cell { width: 20px; text-align: center; }
   .chevron { display: inline-block; transition: transform .15s ease; color: var(--ink-muted); }
@@ -234,7 +239,7 @@
   .tag-unknown { color: var(--ink-muted); }
 
   .product-badges { display: flex; flex-wrap: wrap; gap: 4px; max-width: 280px; }
-  .product-badge { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--ink); white-space: nowrap; }
+  .product-badge { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--ink); max-width: 100%; min-width: 0; box-sizing: border-box; white-space: normal; overflow-wrap: anywhere; }
 
   .empty-state { padding: 40px 20px; text-align: center; color: var(--ink-muted); border: 1px dashed var(--border); border-radius: 8px; background: var(--surface); }
   .footer-note { text-align: center; font-size: 12px; color: var(--ink-muted); padding-block: 6px 2px; }
@@ -315,12 +320,6 @@
     return str;
   }
 
-  function csvEscape(v) {
-    var s = v === null || v === undefined ? "" : String(v);
-    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-    return s;
-  }
-
   // Mirrors order_analysis.py's normalize_product/normalize_address, for
   // the in-browser fallback parser used when the Python backend isn't reachable.
   function normalizeProduct(raw) {
@@ -384,6 +383,23 @@
     return { good: hasStreak || hasCluster, reasons: reasons };
   }
 
+  var RISK_STREAK_LENGTH = 3; // 3+ cancels in a row since the last success
+
+  // The cancel-side counterpart of computeGoodAccount. Only the account's
+  // CURRENT run of cancels counts: any successful order resets it, so
+  // cancel, cancel, success, cancel, cancel is a run of 2 - not flagged.
+  function computeFrequentCancel(orders) {
+    var dated = orders.filter(function (o) { return o.dateKey; }).slice()
+      .sort(function (a, b) { return a.dateKey < b.dateKey ? -1 : a.dateKey > b.dateKey ? 1 : 0; });
+
+    var streak = 0;
+    dated.forEach(function (o) { streak = CANCEL_STATUSES.has(o.status) ? streak + 1 : 0; });
+
+    var reasons = [];
+    if (streak > 0) reasons.push("last " + streak + " order" + (streak === 1 ? "" : "s") + " cancelled with no success since");
+    return { flagged: streak >= RISK_STREAK_LENGTH, reasons: reasons, currentStreak: streak };
+  }
+
   function aggregateRows(rows) {
     var firstDateByEmail = {};
     rows.forEach(function (r) {
@@ -401,13 +417,15 @@
           email: r.email, orders: [], successCount: 0, cancelCount: 0,
           successProducts: new Map(), cancelProducts: new Map(), retailers: new Map(), addresses: new Map(),
           firstDate: firstDateByEmail[r.email] || null,
-          hasNewSuccess: false, hasRepeatSuccess: false,
+          hasNewSuccess: false, hasRepeatSuccess: false, hasPending: false,
         });
       }
       var rec = byEmail.get(r.email);
       rec.orders.push(r);
       if (r.retailer) rec.retailers.set(r.retailer, true);
       if (r.address) rec.addresses.set(r.address, true);
+      // "Ordered" means placed but not yet shipped/delivered - still pending.
+      if (r.status === "ordered") rec.hasPending = true;
       if (SUCCESS_STATUSES.has(r.status)) {
         rec.successCount++;
         if (r.product) rec.successProducts.set(r.product, true);
@@ -427,6 +445,8 @@
       else if (rec.successCount > 0) category = "success";
       else if (rec.cancelCount > 0) category = "cancelled";
       var good = computeGoodAccount(rec.orders);
+      var risk = computeFrequentCancel(rec.orders);
+      var decided = rec.successCount + rec.cancelCount;
       return Object.assign({}, rec, {
         category: category,
         successProductList: Array.from(rec.successProducts.keys()),
@@ -435,6 +455,12 @@
         addressList: Array.from(rec.addresses.keys()),
         goodAccount: good.good,
         goodReasons: good.reasons,
+        // Share of success-vs-cancel orders that succeeded; null when the
+        // account has neither (so it sorts below every real rate).
+        successRate: decided ? Math.round((rec.successCount / decided) * 100) : null,
+        frequentCancel: risk.flagged,
+        cancelReasons: risk.reasons,
+        currentCancelStreak: risk.currentStreak,
         hasNewSuccess: rec.hasNewSuccess,
         hasRepeatSuccess: rec.hasRepeatSuccess,
       });
@@ -483,6 +509,14 @@
   function GoodBadge(props) {
     if (!props.good) return <span className="muted">—</span>;
     return <span className="stamp stamp-good" title={props.reasons.join("; ")}>★ Good</span>;
+  }
+
+  function CancelFlag(props) {
+    if (!props.flagged) {
+      if (props.currentStreak > 0) return <span className="muted" title={props.reasons.join("; ")}>{props.currentStreak + " in a row"}</span>;
+      return <span className="muted">—</span>;
+    }
+    return <span className="stamp stamp-cancel" title={props.reasons.join("; ")}>⚠ Frequent</span>;
   }
 
   function StatusPill(props) {
@@ -574,6 +608,133 @@
     return r.category === chipKey;
   }
 
+  // ---------- old vs new account lists ----------
+
+  var COHORT_STORAGE_KEY = "account-analysis-cohorts";
+
+  // Pasted lists can be one-per-line, comma/semicolon separated, or copied
+  // straight out of a spreadsheet column - anything that isn't an email is ignored.
+  function parseEmailList(text) {
+    var seen = new Set();
+    (text || "").split(/[\s,;]+/).forEach(function (t) {
+      t = t.trim().toLowerCase().replace(/^["'<]+|["'>]+$/g, "");
+      if (t.indexOf("@") > 0) seen.add(t);
+    });
+    return seen;
+  }
+
+  function loadCohortText() {
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(COHORT_STORAGE_KEY) || "{}");
+      return { newText: saved.newText || "", oldText: saved.oldText || "" };
+    } catch (e) { return { newText: "", oldText: "" }; }
+  }
+
+  function saveCohortText(newText, oldText) {
+    try { window.localStorage.setItem(COHORT_STORAGE_KEY, JSON.stringify({ newText: newText, oldText: oldText })); } catch (e) { /* storage unavailable */ }
+  }
+
+  function cohortStats(records, emails) {
+    var st = { listed: emails.size, found: 0, orders: 0, success: 0, cancel: 0, withSuccess: 0, good: 0, risk: 0, pending: 0 };
+    records.forEach(function (r) {
+      if (!emails.has(r.email.toLowerCase())) return;
+      st.found++;
+      st.orders += r.orders.length;
+      st.success += r.successCount;
+      st.cancel += r.cancelCount;
+      if (r.successCount > 0) st.withSuccess++;
+      if (r.goodAccount) st.good++;
+      if (r.frequentCancel) st.risk++;
+      if (r.hasPending) st.pending++;
+    });
+    return st;
+  }
+
+  function pct(n, d) { return d ? Math.round((n / d) * 100) : null; }
+
+  // Each row: how to compute the value and whether higher is better (for
+  // highlighting the winning cohort). Rates are shares of FOUND accounts.
+  var COHORT_METRICS = [
+    { label: "Accounts in list", value: function (s) { return s.listed; } },
+    { label: "Found in loaded data", value: function (s) { return s.found; } },
+    { label: "Orders", value: function (s) { return s.orders; } },
+    { label: "Successful orders", value: function (s) { return s.success; } },
+    { label: "Cancelled orders", value: function (s) { return s.cancel; } },
+    { label: "Order success rate", value: function (s) { return pct(s.success, s.success + s.cancel); }, suffix: "%", better: "high" },
+    { label: "Avg successes / account", value: function (s) { return s.found ? Math.round((s.success / s.found) * 100) / 100 : null; }, better: "high" },
+    { label: "Accounts with a success", value: function (s) { return pct(s.withSuccess, s.found); }, suffix: "%", better: "high" },
+    { label: "Good accounts", value: function (s) { return pct(s.good, s.found); }, suffix: "%", better: "high" },
+    { label: "Frequent cancel", value: function (s) { return pct(s.risk, s.found); }, suffix: "%", better: "low" },
+    { label: "With pending orders", value: function (s) { return s.pending; } },
+  ];
+
+  function CohortPanel(props) {
+    var newStats = cohortStats(props.records, props.newEmails);
+    var oldStats = cohortStats(props.records, props.oldEmails);
+    var overlap = 0;
+    props.newEmails.forEach(function (e) { if (props.oldEmails.has(e)) overlap++; });
+    var hasLists = props.newEmails.size > 0 || props.oldEmails.size > 0;
+
+    function cell(metric, mine, theirs) {
+      var v = metric.value(mine), other = metric.value(theirs);
+      var win = metric.better && v != null && other != null && v !== other &&
+        (metric.better === "high" ? v > other : v < other);
+      return <td className={"cohort-num" + (win ? " cohort-better" : "")}>{v == null ? "—" : v + (metric.suffix || "")}</td>;
+    }
+
+    return (
+      <div className="cohort-panel">
+        <div className="cohort-head">
+          <h2 className="panel-title" style={{ margin: 0 }}>Old vs New accounts</h2>
+          <div className="cohort-actions">
+            {/* Same state as the toolbar's retailer filter - changing either updates both. */}
+            <select
+              className="select" value={props.retailerFilter} aria-label="Compare within retailer"
+              onChange={function (e) { props.onRetailerChange(e.target.value); }}
+            >
+              <option value="all">All retailers</option>
+              {props.retailers.map(function (r) { return <option key={r} value={r}>{r}</option>; })}
+            </select>
+            {hasLists ? <button className="btn btn-ghost" onClick={function () { props.onNewTextChange(""); props.onOldTextChange(""); }}>Clear lists</button> : null}
+          </div>
+        </div>
+        <div className="cohort-inputs">
+          <label className="cohort-field">
+            <span className="cohort-field-head">
+              <span>New accounts</span>
+              <span className="muted small">{newStats.listed + " pasted · " + newStats.found + " found"}</span>
+            </span>
+            <textarea
+              className="cohort-textarea" placeholder="Paste new account emails — one per line or comma separated"
+              value={props.newText} onChange={function (e) { props.onNewTextChange(e.target.value); }}
+            />
+          </label>
+          <label className="cohort-field">
+            <span className="cohort-field-head">
+              <span>Old accounts</span>
+              <span className="muted small">{oldStats.listed + " pasted · " + oldStats.found + " found"}</span>
+            </span>
+            <textarea
+              className="cohort-textarea" placeholder="Paste old account emails — one per line or comma separated"
+              value={props.oldText} onChange={function (e) { props.onOldTextChange(e.target.value); }}
+            />
+          </label>
+        </div>
+        {overlap > 0 ? <p className="warning-item">{overlap + " email" + (overlap === 1 ? " is" : "s are") + " in both lists and counted in both."}</p> : null}
+        {hasLists ? (
+          <table className="cohort-table">
+            <thead><tr><th>Metric</th><th>New</th><th>Old</th></tr></thead>
+            <tbody>
+              {COHORT_METRICS.map(function (m) {
+                return <tr key={m.label}><td>{m.label}</td>{cell(m, newStats, oldStats)}{cell(m, oldStats, newStats)}</tr>;
+              })}
+            </tbody>
+          </table>
+        ) : null}
+      </div>
+    );
+  }
+
   function Toolbar(props) {
     return (
       <div className="toolbar">
@@ -607,6 +768,16 @@
             onClick={function () { props.onGoodOnlyChange(!props.goodOnly); }}
             title="3+ consecutive successful orders, or multiple successful orders within a month"
           >★ Good only</button>
+          <button
+            className={"chip" + (props.pendingOnly ? " chip-active" : "")}
+            onClick={function () { props.onPendingOnlyChange(!props.pendingOnly); }}
+            title="Accounts with at least one order still in Ordered status"
+          >Pending only</button>
+          <button
+            className={"chip chip-risk" + (props.riskOnly ? " chip-active" : "")}
+            onClick={function () { props.onRiskOnlyChange(!props.riskOnly); }}
+            title={RISK_STREAK_LENGTH + "+ cancelled orders in a row since the account's last successful order"}
+          >⚠ Frequent cancel</button>
         </div>
         <select
           className="select" value={props.retailerFilter} aria-label="Filter by retailer"
@@ -615,56 +786,22 @@
           <option value="all">All retailers</option>
           {props.retailers.map(function (r) { return <option key={r} value={r}>{r}</option>; })}
         </select>
+        {props.hasCohorts ? (
+          <select
+            className="select" value={props.cohortFilter} aria-label="Filter by old/new account list"
+            onChange={function (e) { props.onCohortChange(e.target.value); }}
+          >
+            <option value="all">All accounts</option>
+            <option value="new">New list only</option>
+            <option value="old">Old list only</option>
+            <option value="none">In neither list</option>
+          </select>
+        ) : null}
         <div className="toolbar-export">
-          {(props.exportStatus || props.copyStatus) ? <span className="export-status">{props.exportStatus || props.copyStatus}</span> : null}
+          {props.copyStatus ? <span className="export-status">{props.copyStatus}</span> : null}
           <button
-            className="btn btn-ghost" onClick={props.onCopyEmails} disabled={props.exportDisabled} title="Copy every listed email address"
+            className="btn btn-ghost" onClick={props.onCopyEmails} disabled={props.copyDisabled} title="Copy every listed email address"
           >Copy Emails</button>
-          <button className="btn btn-primary" onClick={props.onOpenExport} disabled={props.exportDisabled}>Export CSV</button>
-        </div>
-      </div>
-    );
-  }
-
-  function ExportModal(props) {
-    var allSelected = props.selected.size === EXPORT_COLUMNS.length;
-    return (
-      <div className="modal-overlay" onClick={props.onCancel}>
-        <div className="modal-card" onClick={function (e) { e.stopPropagation(); }}>
-          <h2 className="modal-title">Export CSV</h2>
-          <p className="modal-hint">
-            {"Exports the " + props.rowCount + " account" + (props.rowCount === 1 ? "" : "s") + " currently shown (after your search and filters) — not the whole file. Choose which columns to include below."}
-          </p>
-          <div className="modal-column-actions">
-            <button className="btn btn-ghost" onClick={function () { props.onSelectedChange(new Set(EXPORT_COLUMNS.map(function (c) { return c.key; }))); }}>Select All</button>
-            <button className="btn btn-ghost" onClick={function () { props.onSelectedChange(new Set()); }}>Clear All</button>
-          </div>
-          <div className="modal-columns scroll-box">
-            {EXPORT_COLUMNS.map(function (c) {
-              return (
-                <label className="modal-column-option" key={c.key}>
-                  <input
-                    type="checkbox" checked={props.selected.has(c.key)}
-                    onChange={function () {
-                      var next = new Set(props.selected);
-                      if (next.has(c.key)) next.delete(c.key); else next.add(c.key);
-                      props.onSelectedChange(next);
-                    }}
-                  />
-                  {c.label}
-                </label>
-              );
-            })}
-          </div>
-          <div className="modal-actions">
-            <span className="muted small">{props.selected.size + " of " + EXPORT_COLUMNS.length + " columns"}</span>
-            <div className="modal-column-actions">
-              <button className="btn btn-ghost" onClick={props.onCancel}>Cancel</button>
-              <button className="btn btn-primary" onClick={props.onConfirm} disabled={props.selected.size === 0}>
-                {"Export " + props.rowCount + " Row" + (props.rowCount === 1 ? "" : "s") + (allSelected ? "" : " (" + props.selected.size + " col)")}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -674,26 +811,11 @@
     { key: "email", label: "Source Email" },
     { key: "successCount", label: "Success" },
     { key: "cancelCount", label: "Cancelled" },
+    { key: "successRate", label: "Success %" },
     { key: "category", label: "Category" },
     { key: "goodAccount", label: "Good" },
-    { key: "firstDate", label: "First Order" },
-  ];
-
-  // Every column the CSV export can include, in export order. Used to
-  // build both the "select columns" checklist and the CSV itself, so the
-  // two can never drift apart.
-  var EXPORT_COLUMNS = [
-    { key: "email", label: "Source Email", value: function (r) { return r.email; } },
-    { key: "successCount", label: "Success Count", value: function (r) { return r.successCount; } },
-    { key: "cancelCount", label: "Cancelled Count", value: function (r) { return r.cancelCount; } },
-    { key: "category", label: "Category", value: function (r) { return r.category; } },
-    { key: "goodAccount", label: "Good Account", value: function (r) { return r.goodAccount ? "Yes" : "No"; } },
-    { key: "goodReasons", label: "Good Account Reason", value: function (r) { return r.goodReasons.join("; "); } },
-    { key: "firstDate", label: "First Order Date", value: function (r) { return r.firstDate ? r.firstDate.slice(0, 10) : ""; } },
-    { key: "retailers", label: "Retailers", value: function (r) { return r.retailerList.join("; "); } },
-    { key: "addresses", label: "Addresses", value: function (r) { return r.addressList.join("; "); } },
-    { key: "successProducts", label: "Success Products", value: function (r) { return r.successProductList.join("; "); } },
-    { key: "cancelProducts", label: "Cancelled Products", value: function (r) { return r.cancelProductList.join("; "); } },
+    { key: "frequentCancel", label: "Cancel Flag" },
+    { key: "firstDate", label: "Order Date" },
   ];
 
   function ResultsTable(props) {
@@ -708,15 +830,22 @@
           key={r.email} className={"data-row" + (isOpen ? " data-row-open" : "")}
           onClick={function () { props.onToggleExpand(r.email); }}
         >
-          <td className="cell-email" title={r.email}>{r.email}</td>
+          <td className="cell-email" title={r.email}>
+            {props.cohortOf ? (function () {
+              var c = props.cohortOf(r.email);
+              return c ? <span className={"tag tag-cohort-" + c} style={{ marginRight: 6 }}>{c === "new" ? "New" : "Old"}</span> : null;
+            })() : null}
+            {r.email}
+          </td>
           <td className="cell-num">{r.successCount}</td>
           <td className="cell-num">{r.cancelCount}</td>
+          <td className="cell-num">{r.successRate == null ? "—" : r.successRate + "%"}</td>
           <td><CategoryBadge category={r.category} /></td>
           <td><GoodBadge good={r.goodAccount} reasons={r.goodReasons} /></td>
+          <td><CancelFlag flagged={r.frequentCancel} reasons={r.cancelReasons} currentStreak={r.currentCancelStreak} /></td>
           <td className="cell-date">{r.firstDate ? r.firstDate.slice(0, 10) : "—"}</td>
           <td><ProductList items={r.retailerList} /></td>
           <td><ProductList items={r.addressList} /></td>
-          <td><ProductList items={r.successProductList.concat(r.cancelProductList.filter(function (p) { return r.successProductList.indexOf(p) === -1; }))} /></td>
           <td className="expand-cell"><span className={"chevron" + (isOpen ? " chevron-open" : "")}>▸</span></td>
         </tr>,
       ];
@@ -726,7 +855,7 @@
         });
         out.push(
           <tr className="detail-row" key={r.email + "-detail"}>
-            <td colSpan={10}>
+            <td colSpan={11}>
               <table className="detail-table">
                 <thead>
                   <tr>
@@ -758,6 +887,19 @@
     return (
       <div className="table-wrap scroll-box">
         <table className="ledger-table">
+          <colgroup>
+            <col style={{ width: 220 }} />
+            <col style={{ width: 100 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 100 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 90 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 130 }} />
+            <col style={{ width: 160 }} />
+            <col />
+            <col style={{ width: 44 }} />
+          </colgroup>
           <thead>
             <tr>
               {COLUMNS.map(function (c) {
@@ -770,7 +912,6 @@
               })}
               <th key="retailers">Retailer</th>
               <th key="addresses">Addresses</th>
-              <th key="products">Products</th>
               <th key="expand"></th>
             </tr>
           </thead>
@@ -789,13 +930,24 @@
     var s7 = useState("successCount"); var sortKey = s7[0], setSortKey = s7[1];
     var s8 = useState("desc"); var sortDir = s8[0], setSortDir = s8[1];
     var s9 = useState(null); var expanded = s9[0], setExpanded = s9[1];
-    var s10 = useState(""); var exportStatus = s10[0], setExportStatus = s10[1];
     var s11 = useState("all"); var retailerFilter = s11[0], setRetailerFilter = s11[1];
     var s12 = useState(false); var goodOnly = s12[0], setGoodOnly = s12[1];
     var s13 = useState(""); var copyStatus = s13[0], setCopyStatus = s13[1];
     var s14 = useState(""); var addressSearch = s14[0], setAddressSearch = s14[1];
-    var s15 = useState(false); var exportModalOpen = s15[0], setExportModalOpen = s15[1];
-    var s16 = useState(new Set(EXPORT_COLUMNS.map(function (c) { return c.key; }))); var exportColumns = s16[0], setExportColumns = s16[1];
+    var s17 = useState(false); var pendingOnly = s17[0], setPendingOnly = s17[1];
+    var s18 = useState(false); var riskOnly = s18[0], setRiskOnly = s18[1];
+    var s19 = useState(function () { return loadCohortText(); }); var cohortText = s19[0], setCohortText = s19[1];
+    var s20 = useState("all"); var cohortFilter = s20[0], setCohortFilter = s20[1];
+    var newEmails = useMemo(function () { return parseEmailList(cohortText.newText); }, [cohortText.newText]);
+    var oldEmails = useMemo(function () { return parseEmailList(cohortText.oldText); }, [cohortText.oldText]);
+    var hasCohorts = newEmails.size > 0 || oldEmails.size > 0;
+    function updateCohortText(patch) {
+      setCohortText(function (prev) {
+        var next = Object.assign({}, prev, patch);
+        saveCohortText(next.newText, next.oldText);
+        return next;
+      });
+    }
     var fileInputRef = useRef(null);
 
     var retailers = useMemo(function () {
@@ -818,14 +970,16 @@
     var records = useMemo(function () { return aggregateRows(scopedRows); }, [scopedRows]);
 
     var totals = useMemo(function () {
-      var success = 0, cancelled = 0, both = 0, good = 0;
+      var success = 0, cancelled = 0, both = 0, good = 0, pending = 0, risk = 0;
       records.forEach(function (r) {
         if (r.category === "success") success++;
         else if (r.category === "cancelled") cancelled++;
         else if (r.category === "both") both++;
         if (r.goodAccount) good++;
+        if (r.hasPending) pending++;
+        if (r.frequentCancel) risk++;
       });
-      return { accounts: records.length, success: success, cancelled: cancelled, both: both, good: good, orders: scopedRows.length };
+      return { accounts: records.length, success: success, cancelled: cancelled, both: both, good: good, pending: pending, risk: risk, orders: scopedRows.length };
     }, [records, scopedRows]);
 
     var filteredSorted = useMemo(function () {
@@ -836,6 +990,16 @@
         });
       }
       if (goodOnly) list = list.filter(function (r) { return r.goodAccount; });
+      if (pendingOnly) list = list.filter(function (r) { return r.hasPending; });
+      if (riskOnly) list = list.filter(function (r) { return r.frequentCancel; });
+      if (hasCohorts && cohortFilter !== "all") {
+        list = list.filter(function (r) {
+          var e = r.email.toLowerCase();
+          if (cohortFilter === "new") return newEmails.has(e);
+          if (cohortFilter === "old") return oldEmails.has(e);
+          return !newEmails.has(e) && !oldEmails.has(e);
+        });
+      }
       var q = search.trim().toLowerCase();
       if (q) {
         list = list.filter(function (r) {
@@ -855,7 +1019,7 @@
         if (av > bv) return 1 * dir;
         return a.email.localeCompare(b.email);
       });
-    }, [records, category, goodOnly, search, sortKey, sortDir]);
+    }, [records, category, goodOnly, pendingOnly, riskOnly, hasCohorts, cohortFilter, newEmails, oldEmails, search, sortKey, sortDir]);
 
     // Parses read-but-unprocessed files entirely in the browser. Used when
     // no Python backend is reachable (opened as a plain file, or hosted
@@ -972,59 +1136,12 @@
       setFileEntries(function (prev) { return prev.filter(function (f) { return f.id !== id; }); });
       setRawRows(function (prev) { return prev.filter(function (r) { return r.fileId !== id; }); });
     }
-    function onClearAll() { setFileEntries([]); setRawRows([]); setExpanded(null); setRetailerFilter("all"); setGoodOnly(false); }
+    function onClearAll() { setFileEntries([]); setRawRows([]); setExpanded(null); setRetailerFilter("all"); setGoodOnly(false); setPendingOnly(false); setRiskOnly(false); }
     function onSort(key) {
       if (sortKey === key) { setSortDir(sortDir === "asc" ? "desc" : "asc"); }
       else { setSortKey(key); setSortDir(key === "email" || key === "category" || key === "firstDate" ? "asc" : "desc"); }
     }
     function onToggleExpand(email) { setExpanded(function (prev) { return prev === email ? null : email; }); }
-
-    function openExportModal() { if (filteredSorted.length) setExportModalOpen(true); }
-    function cancelExport() { setExportModalOpen(false); }
-
-    function handleExport() {
-      if (!filteredSorted.length || exportColumns.size === 0) return;
-      setExportModalOpen(false);
-      var columns = EXPORT_COLUMNS.filter(function (c) { return exportColumns.has(c.key); });
-      var header = columns.map(function (c) { return c.label; });
-      var lines = [header.map(csvEscape).join(",")];
-      filteredSorted.forEach(function (r) {
-        lines.push(columns.map(function (c) { return c.value(r); }).map(csvEscape).join(","));
-      });
-      var csvText = lines.join("\r\n");
-      setExportStatus("Preparing…");
-
-      function fallbackDownload() {
-        try {
-          var blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement("a");
-          a.href = url; a.download = "order-ledger-summary.csv";
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          setExportStatus("Downloaded.");
-        } catch (err2) {
-          setExportStatus("Export unavailable here.");
-        }
-        setTimeout(function () { setExportStatus(""); }, 2500);
-      }
-
-      if (typeof window !== "undefined" && window.claude && window.claude.use) {
-        window.claude.use("downloads").then(function (downloads) {
-          if (!downloads) { fallbackDownload(); return; }
-          downloads.save({ filename: "order-ledger-summary.csv", data: csvText }).then(function (result) {
-            setExportStatus(result && result.status === "delivered" ? "Delivered." : "Saved.");
-            setTimeout(function () { setExportStatus(""); }, 2500);
-          }).catch(function (err) {
-            if (err && err.code === "declined") { setExportStatus(""); return; }
-            if (err && err.code === "rate_limited") { setExportStatus("Try again in a moment."); setTimeout(function () { setExportStatus(""); }, 2500); return; }
-            fallbackDownload();
-          });
-        }).catch(fallbackDownload);
-      } else {
-        fallbackDownload();
-      }
-    }
 
     function handleCopyEmails() {
       if (!filteredSorted.length) return;
@@ -1064,6 +1181,8 @@
           <a className="page-nav-link" href="/discord.html">Jigging Analysis</a>
           <a className="page-nav-link" href="/profile-finder.html">Profile Finder</a>
           <a className="page-nav-link" href="/account-finder.html">Account Finder</a>
+          <a className="page-nav-link" href="/proxy-tester.html">Proxy Tester</a>
+          <a className="page-nav-link" href="/speed-checker.html">Speed Check</a>
         </nav>
         <header className="topbar">
           <div className="brand">
@@ -1088,26 +1207,37 @@
               <StatTile label="Cancelled only" value={totals.cancelled} tone="cancel" />
               <StatTile label="Both" value={totals.both} tone="both" />
               <StatTile label="Good accounts" value={totals.good} tone="good" />
+              <StatTile label="Pending" value={totals.pending} />
+              <StatTile label="Frequent cancel" value={totals.risk} tone="risk" />
               <StatTile label="Order rows" value={totals.orders} />
             </div>
+            <CohortPanel
+              records={records} newEmails={newEmails} oldEmails={oldEmails}
+              retailers={retailers} retailerFilter={retailerFilter} onRetailerChange={setRetailerFilter}
+              newText={cohortText.newText} oldText={cohortText.oldText}
+              onNewTextChange={function (v) { updateCohortText({ newText: v }); }}
+              onOldTextChange={function (v) { updateCohortText({ oldText: v }); }}
+            />
             <Toolbar
               search={search} onSearchChange={setSearch} addressSearch={addressSearch} onAddressSearchChange={setAddressSearch}
               category={category} onCategoryChange={setCategory}
               retailers={retailers} retailerFilter={retailerFilter} onRetailerChange={setRetailerFilter}
               goodOnly={goodOnly} onGoodOnlyChange={setGoodOnly}
-              onOpenExport={openExportModal} exportDisabled={!filteredSorted.length} exportStatus={exportStatus}
+              pendingOnly={pendingOnly} onPendingOnlyChange={setPendingOnly}
+              riskOnly={riskOnly} onRiskOnlyChange={setRiskOnly}
+              hasCohorts={hasCohorts} cohortFilter={cohortFilter} onCohortChange={setCohortFilter}
+              copyDisabled={!filteredSorted.length}
               onCopyEmails={handleCopyEmails} copyStatus={copyStatus}
             />
-            <ResultsTable records={filteredSorted} sortKey={sortKey} sortDir={sortDir} onSort={onSort} expanded={expanded} onToggleExpand={onToggleExpand} />
+            <ResultsTable
+              cohortOf={hasCohorts ? function (email) {
+                var e = email.toLowerCase();
+                return newEmails.has(e) ? "new" : oldEmails.has(e) ? "old" : null;
+              } : null}
+              records={filteredSorted} sortKey={sortKey} sortDir={sortDir} onSort={onSort} expanded={expanded} onToggleExpand={onToggleExpand} />
           </section>
         </main>
         <footer className="footer-note">Files are analyzed on your machine — by the local Python backend when running app.py, or right in your browser otherwise.</footer>
-        {exportModalOpen ? (
-          <ExportModal
-            selected={exportColumns} onSelectedChange={setExportColumns} rowCount={filteredSorted.length}
-            onCancel={cancelExport} onConfirm={handleExport}
-          />
-        ) : null}
       </div>
     );
   }

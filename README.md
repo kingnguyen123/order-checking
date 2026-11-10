@@ -90,11 +90,16 @@ backend/
     discord_client.py      the bot connection for the web app (background thread, live monitoring, scanning)
   profile_finder/          split a profile-export CSV by email list (filter.py = command-line script)
   account_finder/          split an email:password account list by email list (filter.py = command-line script)
+  speed_checker/           background jobs for the Speed Check page (uses tools/proxy_speed_checker)
 frontend/
   index.html               Account Analysis page (CSV upload/analysis)
   discord.html             Jigging Analysis page
   profile-finder.html      Profile Finder page
   account-finder.html      Account Finder page
+  proxy-tester.html        Proxy Tester page
+  speed-checker.html       Speed Check page (fast session proxies, exit IP/country)
+tools/
+  proxy_speed_checker/     terminal proxy speed checker (see its README)
 tests/                     Offline tests
 docs/                      Build notes and rewrite guides
 archive/                   Earlier version of the Discord code, kept for reference

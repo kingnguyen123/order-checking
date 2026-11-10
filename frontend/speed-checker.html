@@ -1,0 +1,518 @@
+<title>Speed Check</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #000201;
+    --bg-sidebar: #010602;
+    --bg-input: #070d0b;
+    --surface: #0b1713;
+    --surface-hover: #0d1915;
+    --track: #14201c;
+    --border: #1a2a24;
+
+    --text: #e8ece9;
+    --text-secondary: #8a918d;
+    --text-muted: #4f5753;
+
+    --primary: #00ca74;
+    --primary-dark: #005d36;
+    --success: #03a329;
+    --warning: #f09900;
+    --danger: #e9000e;
+
+    /* legacy token names, aliased onto the palette above */
+    --paper: var(--bg);
+    --surface-2: var(--surface-hover);
+    --ink: var(--text);
+    --ink-muted: var(--text-secondary);
+    --accent: var(--primary);
+    --accent-contrast: var(--bg);
+    --accent-soft: rgba(0, 202, 116, 0.12);
+    --stamp-success: var(--success);
+    --stamp-success-bg: rgba(3, 163, 41, 0.16);
+    --stamp-cancel: var(--danger);
+    --stamp-cancel-bg: rgba(233, 0, 14, 0.16);
+
+    --font-display: 'Zilla Slab', Georgia, 'Times New Roman', serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Consolas', 'SFMono-Regular', monospace;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); padding-inline: 20px; padding-block: 28px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  .app-shell { width: calc(100vw - 40px); max-width: 2400px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+
+  .scroll-box { scrollbar-width: thin; scrollbar-color: var(--border) var(--track); }
+  .scroll-box::-webkit-scrollbar { width: 11px; height: 11px; }
+  .scroll-box::-webkit-scrollbar-track { background: var(--track); }
+  .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
+  .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
+
+  .page-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+  .page-nav-link {
+    font-family: var(--font-body); font-weight: 600; font-size: 13px;
+    padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--ink-muted); text-decoration: none;
+  }
+  .page-nav-link:hover { border-color: var(--accent); color: var(--ink); }
+  .page-nav-active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .page-nav-active:hover { color: var(--accent-contrast); }
+
+  .topbar { padding-block: 2px 4px; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand-mark {
+    font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    border: 2px solid var(--accent); color: var(--accent); border-radius: 4px;
+    width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transform: rotate(-3deg); letter-spacing: 0.02em;
+  }
+  .brand-title { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin: 0 0 2px; text-wrap: balance; }
+  .brand-tag { margin: 0; color: var(--ink-muted); font-size: 13.5px; max-width: 62ch; }
+
+  .workspace { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } .intake { position: static !important; } }
+
+  .panel-title { font-family: var(--font-display); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin: 0 0 6px; }
+  .panel-hint { font-size: 12.5px; color: var(--ink-muted); margin: 0 0 6px; line-height: 1.5; }
+
+  .intake { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
+  .intake-section { display: flex; flex-direction: column; gap: 8px; }
+  .intake-section + .intake-section { padding-top: 14px; border-top: 1px solid var(--border); }
+
+  .proxy-textarea {
+    width: 100%; min-height: 220px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg-input); color: var(--ink); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5;
+  }
+  .proxy-textarea::placeholder { color: var(--text-muted); }
+  .proxy-count-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--ink-muted); }
+  .link-btn { background: none; border: none; padding: 0; color: var(--accent); font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .link-btn:hover { text-decoration: underline; }
+
+  .option-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .option { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; color: var(--ink-muted); min-width: 0; }
+  .option input {
+    width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input);
+    color: var(--ink); font-family: var(--font-mono); font-size: 12.5px;
+  }
+  .option input:disabled { opacity: 0.45; }
+  .option input[type=text] {
+    width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input);
+    color: var(--ink); font-family: var(--font-mono); font-size: 12.5px;
+  }
+  .data-note { font-size: 12px; color: var(--ink-muted); margin: 0; line-height: 1.45; }
+
+  .btn { font-family: var(--font-body); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ghost { background: transparent; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .btn-stop { background: var(--stamp-cancel-bg); border-color: var(--stamp-cancel); color: var(--text); }
+  .intake-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  .analysis { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 4px; }
+  @media (max-width: 700px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
+  .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .stat-value { font-family: var(--font-display); font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-unit { font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--ink-muted); margin-left: 4px; }
+  .stat-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .stat-found .stat-value { color: var(--primary); }
+  .stat-missing .stat-value { color: var(--stamp-cancel); }
+
+  .progress-track { height: 4px; border-radius: 999px; background: var(--track); overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); transition: width .3s ease; }
+
+  .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin: 14px 0; }
+  .toolbar-export { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .export-status { font-size: 12px; color: var(--ink-muted); }
+  .muted { color: var(--ink-muted); }
+  .small { font-size: 12px; }
+
+  .notice { border-radius: 6px; padding: 10px 12px; margin: 10px 0 4px; font-size: 12.5px; }
+  .notice-bad { background: var(--stamp-cancel-bg); border: 1px solid var(--stamp-cancel); color: var(--text); }
+  .notice-warn { background: rgba(240, 153, 0, 0.12); border: 1px solid var(--warning); color: var(--text); }
+  .notice-title { font-weight: 600; margin: 0 0 4px; }
+  .notice-list { font-family: var(--font-mono); font-size: 12px; margin: 0; }
+
+  .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); max-height: 62vh; }
+  .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ledger-table thead th {
+    position: sticky; top: 0; z-index: 1; text-align: left; padding: 10px 9px; background: var(--surface-2);
+    border-bottom: 1px solid var(--border); font-weight: 600; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-muted); white-space: nowrap;
+  }
+  .ledger-table th.num, .data-row td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .data-row { border-bottom: 1px solid var(--border); }
+  .data-row:hover { background: var(--surface-2); }
+  .data-row td { padding: 9px 9px; vertical-align: middle; font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+  .row-dead td { color: var(--ink-muted); }
+  .rank-cell { color: var(--ink-muted); }
+
+  .status-stamp { display: inline-block; font-family: var(--font-body); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 4px; }
+  .status-alive { background: var(--stamp-success-bg); color: var(--primary); }
+  .status-dead { background: var(--stamp-cancel-bg); color: #ff6b73; }
+
+
+  /* width trick: the note wraps to the proxy's width instead of widening the column */
+
+
+  .empty-state { padding: 40px 20px; text-align: center; color: var(--ink-muted); border: 1px dashed var(--border); border-radius: 8px; background: var(--surface); margin-top: 6px; }
+  .footer-note { text-align: center; font-size: 12px; color: var(--ink-muted); padding-block: 6px 2px; }
+</style>
+<style>
+  .option-grid-2 { grid-template-columns: 1fr 1fr; }
+  .option-wide { grid-column: 1 / -1; }
+  .stat-row-7 { grid-template-columns: repeat(7, 1fr); }
+  @media (max-width: 1100px) { .stat-row-7 { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 700px) { .stat-row-7 { grid-template-columns: repeat(2, 1fr); } }
+  .status-fast { background: var(--stamp-success-bg); color: var(--primary); }
+  .status-slow { background: rgba(240, 153, 0, 0.14); color: var(--warning); }
+  .status-failed { background: var(--stamp-cancel-bg); color: #ff6b73; }
+  .error-cell { color: var(--ink-muted); font-size: 11.5px; white-space: normal; min-width: 160px; }
+</style>
+
+<div id="root"></div>
+<noscript>This page needs JavaScript enabled.</noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+(function () {
+  "use strict";
+  var useState = React.useState, useMemo = React.useMemo, useRef = React.useRef, useEffect = React.useEffect;
+
+  var POLL_MS = 700;
+  var STATUS_LABELS = { fast: "Fast", slow: "Slow", failed: "Failed" };
+
+  function csvEscape(v) {
+    var s = v === null || v === undefined ? "" : String(v);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  // Same rules as the backend: blank lines and exact duplicates don't count.
+  function countProxies(text) {
+    var seen = {};
+    (text || "").split("\n").forEach(function (l) {
+      var t = l.replace(/\s+/g, "");
+      if (t) seen[t] = true;
+    });
+    return Object.keys(seen).length;
+  }
+
+  function isActive(job) {
+    return !!job && (job.state === "running" || job.state === "stopping");
+  }
+
+  function postJson(url, payload) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {}),
+    }).then(function (resp) {
+      return resp.json().then(function (data) { return { ok: resp.ok, data: data }; });
+    });
+  }
+
+  function copyText(text) {
+    // navigator.clipboard only exists on https or localhost, not a LAN address
+    if (navigator.clipboard) return navigator.clipboard.writeText(text);
+    var area = document.createElement("textarea");
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    var copied = document.execCommand("copy");
+    document.body.removeChild(area);
+    return copied ? Promise.resolve() : Promise.reject(new Error("copy failed"));
+  }
+
+  function download(filename, text, type) {
+    var blob = new Blob([text], { type: type });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function StatTile(props) {
+    return (
+      <div className={"stat-tile" + (props.tone ? " stat-" + props.tone : "")}>
+        <div className="stat-value">{props.value}{props.unit ? <span className="stat-unit">{props.unit}</span> : null}</div>
+        <div className="stat-label">{props.label}</div>
+      </div>
+    );
+  }
+
+  function OptionField(props) {
+    return (
+      <label className={"option" + (props.wide ? " option-wide" : "")}>
+        {props.label}
+        <input
+          type={props.type || "number"} value={props.value} min={props.min} max={props.max} step={props.step || 1}
+          spellCheck={false} onChange={function (e) { props.onChange(e.target.value); }}
+        />
+      </label>
+    );
+  }
+
+  function msTile(value) {
+    return value === null ? { value: "–", unit: "" } : { value: value, unit: "ms" };
+  }
+
+  function App() {
+    var s1 = useState(""); var text = s1[0], setText = s1[1];
+    var s2 = useState("https://www.fastly.com"); var url = s2[0], setUrl = s2[1];
+    var s3 = useState("5"); var timeout = s3[0], setTimeoutValue = s3[1];
+    var s4 = useState("1000"); var threshold = s4[0], setThreshold = s4[1];
+    var s5 = useState("100"); var concurrency = s5[0], setConcurrency = s5[1];
+    var s6 = useState(false); var starting = s6[0], setStarting = s6[1];
+    var s7 = useState(null); var job = s7[0], setJob = s7[1];
+    var s8 = useState(""); var errorMsg = s8[0], setErrorMsg = s8[1];
+    var s9 = useState(""); var exportStatus = s9[0], setExportStatus = s9[1];
+    var jobIdRef = useRef(null);
+    var pollTimerRef = useRef(null);
+    var testedLinesRef = useRef([]);   // the text as it was when the run started, for copying full proxies back out
+
+    useEffect(function () {
+      return function () { clearTimeout(pollTimerRef.current); };
+    }, []);
+
+    var count = useMemo(function () { return countProxies(text); }, [text]);
+    var rows = job ? job.rows : [];
+    var running = isActive(job);
+    var stats = useMemo(function () {
+      var working = rows.filter(function (r) { return r.avgMs !== null; });
+      var times = working.map(function (r) { return r.avgMs; });
+      return {
+        working: working.length,
+        fast: rows.filter(function (r) { return r.status === "fast"; }),
+        failed: rows.length - working.length,
+        fastest: times.length ? Math.min.apply(null, times) : null,
+        average: times.length ? Math.round(times.reduce(function (a, b) { return a + b; }, 0) / times.length) : null,
+        slowest: times.length ? Math.max.apply(null, times) : null,
+      };
+    }, [rows]);
+
+    function poll() {
+      fetch("/api/speed-checker/jobs/" + jobIdRef.current).then(function (resp) {
+        if (!resp.ok) throw new Error("job gone");
+        return resp.json();
+      }).then(function (data) {
+        setJob(data);
+        if (isActive(data)) pollTimerRef.current = setTimeout(poll, POLL_MS);
+      }).catch(function () {
+        setJob(function (j) { return j ? Object.assign({}, j, { state: "stopped" }) : j; });
+        setErrorMsg("Lost contact with the backend. Make sure app.py is running.");
+      });
+    }
+
+    function onStart() {
+      setStarting(true); setErrorMsg(""); setExportStatus(""); setJob(null);
+      testedLinesRef.current = text.split("\n");
+      postJson("/api/speed-checker/jobs", {
+        proxies: text,
+        url: url,
+        timeout: Number(timeout) || 5,
+        threshold: Number(threshold) || 1000,
+        concurrency: Number(concurrency) || 100,
+      }).then(function (res) {
+        setStarting(false);
+        if (!res.ok) { setErrorMsg(res.data.error || "Could not start the check."); return; }
+        jobIdRef.current = res.data.jobId;
+        setJob({ state: "running", total: count, done: 0, duplicates: 0, invalidLines: [], rows: [], threshold: Number(threshold) || 1000 });
+        poll();
+      }).catch(function () {
+        setStarting(false);
+        setErrorMsg("Could not reach the backend. Make sure app.py is running.");
+      });
+    }
+
+    function onStop() {
+      setJob(function (j) { return Object.assign({}, j, { state: "stopping" }); });
+      postJson("/api/speed-checker/jobs/" + jobIdRef.current + "/stop").catch(function () {
+        setErrorMsg("Could not reach the backend. Make sure app.py is running.");
+      });
+    }
+
+    function onClear() { setText(""); setJob(null); setErrorMsg(""); setExportStatus(""); }
+
+    function flashStatus(message) {
+      setExportStatus(message);
+      setTimeout(function () { setExportStatus(""); }, 2500);
+    }
+
+    // The backend only sends session IDs, so full lines come from the text this page still holds.
+    function fastLines() {
+      return stats.fast.map(function (r) { return testedLinesRef.current[r.line - 1].replace(/\s+/g, ""); });
+    }
+
+    function onCopyFast() {
+      var lines = fastLines();
+      copyText(lines.join("\n")).then(function () {
+        flashStatus("Copied " + lines.length + ".");
+      }).catch(function () { flashStatus("Copy unavailable here."); });
+    }
+
+    function onDownloadFast() {
+      download("fast_proxies.txt", fastLines().join("\n") + "\n", "text/plain;charset=utf-8");
+      flashStatus("Downloaded.");
+    }
+
+    function onExportCsv() {
+      var header = ["session_id", "status", "avg_ms", "exit_ip", "country", "error"];
+      var lines = [header.join(",")].concat(rows.map(function (r) {
+        return [r.session, r.status, r.avgMs, r.exitIp, r.country, r.error].map(csvEscape).join(",");
+      }));
+      download("results.csv", lines.join("\n") + "\n", "text/csv;charset=utf-8");
+      flashStatus("Downloaded.");
+    }
+
+    var statusLine = "";
+    if (job) {
+      if (job.state === "running") statusLine = "Testing " + job.done + " of " + job.total + "…";
+      else if (job.state === "stopping") statusLine = "Stopping. Proxies already being tested will finish first.";
+      else if (job.state === "stopped") statusLine = "Stopped after " + job.done + " of " + job.total + " proxies.";
+      else statusLine = "Finished. Fastest first, failed proxies last.";
+    }
+    var notes = [];
+    if (job && job.duplicates) notes.push(job.duplicates + " duplicate line" + (job.duplicates === 1 ? "" : "s") + " removed");
+    if (job && job.invalidLines && job.invalidLines.length) notes.push("invalid line" + (job.invalidLines.length === 1 ? "" : "s") + " skipped: " + job.invalidLines.slice(0, 20).join(", ") + (job.invalidLines.length > 20 ? "…" : ""));
+
+    var fastestTile = msTile(stats.fastest), averageTile = msTile(stats.average), slowestTile = msTile(stats.slowest);
+
+    return (
+      <div className="app-shell">
+        <nav className="page-nav">
+          <a className="page-nav-link" href="/">Account Analysis</a>
+          <a className="page-nav-link" href="/discord.html">Jigging Analysis</a>
+          <a className="page-nav-link" href="/profile-finder.html">Profile Finder</a>
+          <a className="page-nav-link" href="/account-finder.html">Account Finder</a>
+          <a className="page-nav-link" href="/proxy-tester.html">Proxy Tester</a>
+          <a className="page-nav-link page-nav-active" href="/speed-checker.html">Speed Check</a>
+        </nav>
+        <header className="topbar">
+          <div className="brand">
+            <span className="brand-mark">OL</span>
+            <div>
+              <h1 className="brand-title">Speed Check</h1>
+              <p className="brand-tag">Paste session proxies to find the fast ones, fastest first, with each session's exit IP and country.</p>
+            </div>
+          </div>
+        </header>
+        <main className="workspace">
+          <aside className="intake">
+            <div className="intake-section">
+              <h2 className="panel-title">1. Proxies</h2>
+              <p className="panel-hint">One per line as <code>host:port:username:password</code>. Every line is its own proxy, even with the same host and port.</p>
+              <textarea
+                className="proxy-textarea scroll-box" value={text} spellCheck={false} autoComplete="off" aria-label="Proxies, one per line"
+                placeholder={"mix.nexaproxies.com:8888:nt_xxxx__session-abc123__lifetime-120:PASSWORD"}
+                onChange={function (e) { setText(e.target.value); }}
+              />
+              <div className="proxy-count-row">
+                <span>{count + " prox" + (count === 1 ? "y" : "ies") + " listed"}</span>
+              </div>
+            </div>
+            <div className="intake-section">
+              <h2 className="panel-title">2. Options</h2>
+              <div className="option-grid option-grid-2">
+                <OptionField label="Test URL" type="text" wide={true} value={url} onChange={setUrl} />
+                <OptionField label="Fast under (ms)" value={threshold} min={1} step={50} onChange={setThreshold} />
+                <OptionField label="Timeout (s)" value={timeout} min={1} max={60} onChange={setTimeoutValue} />
+                <OptionField label="Concurrency" value={concurrency} min={1} max={500} onChange={setConcurrency} />
+              </div>
+              <p className="data-note">Each working proxy is tested twice and averaged. Only response headers are fetched, so it uses very little proxy data.</p>
+            </div>
+            <div className="intake-actions">
+              <button className="btn btn-ghost" onClick={onClear} disabled={running}>Clear</button>
+              {running ? (
+                <button className="btn btn-stop" onClick={onStop} disabled={job.state === "stopping"}>{job.state === "stopping" ? "Stopping…" : "Stop"}</button>
+              ) : (
+                <button className="btn btn-primary" onClick={onStart} disabled={!count || starting || !url.trim()}>{starting ? "Starting…" : "Start check"}</button>
+              )}
+            </div>
+          </aside>
+          <section className="analysis">
+            <h2 className="panel-title">Results</h2>
+            {errorMsg ? <div className="notice notice-bad">{errorMsg}</div> : null}
+            {job ? (
+              <div className="stat-row stat-row-7">
+                <StatTile label="Tested" value={job.done + " / " + job.total} />
+                <StatTile label="Working" value={stats.working} />
+                <StatTile label={"Fast < " + job.threshold + " ms"} value={stats.fast.length} tone="found" />
+                <StatTile label="Failed" value={stats.failed} tone={stats.failed ? "missing" : null} />
+                <StatTile label="Fastest" value={fastestTile.value} unit={fastestTile.unit} />
+                <StatTile label="Average" value={averageTile.value} unit={averageTile.unit} />
+                <StatTile label="Slowest" value={slowestTile.value} unit={slowestTile.unit} />
+              </div>
+            ) : null}
+            {running ? (
+              <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={job.total} aria-valuenow={job.done} aria-label="Proxies tested">
+                <div className="progress-fill" style={{ width: (job.total ? job.done / job.total * 100 : 0) + "%" }} />
+              </div>
+            ) : null}
+            {notes.length ? (
+              <div className="notice notice-warn"><p className="notice-list">{notes.join("; ")}</p></div>
+            ) : null}
+            {job ? (
+              <div className="toolbar">
+                <span className="muted small" role="status">{statusLine}</span>
+                <div className="toolbar-export">
+                  {exportStatus ? <span className="export-status">{exportStatus}</span> : null}
+                  <button className="btn btn-ghost" onClick={onExportCsv} disabled={!rows.length}>Export CSV</button>
+                  <button className="btn btn-ghost" onClick={onDownloadFast} disabled={!stats.fast.length}>Download .txt</button>
+                  <button className="btn btn-primary" onClick={onCopyFast} disabled={!stats.fast.length}>{"Copy " + stats.fast.length + " fast proxies"}</button>
+                </div>
+              </div>
+            ) : null}
+            {rows.length ? (
+              <div className="table-wrap scroll-box">
+                <table className="ledger-table">
+                  <thead>
+                    <tr>
+                      <th className="num">#</th>
+                      <th>Session</th>
+                      <th>Status</th>
+                      <th className="num">Avg (ms)</th>
+                      <th>Exit IP</th>
+                      <th>Country</th>
+                      <th>Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map(function (r, i) {
+                      return (
+                        <tr className={"data-row" + (r.status === "failed" ? " row-dead" : "")} key={r.line}>
+                          <td className="num rank-cell">{i + 1}</td>
+                          <td>{r.session}</td>
+                          <td><span className={"status-stamp status-" + r.status}>{STATUS_LABELS[r.status]}</span></td>
+                          <td className="num">{r.avgMs === null ? "–" : r.avgMs}</td>
+                          <td>{r.exitIp || "–"}</td>
+                          <td>{r.country || "–"}</td>
+                          <td className="error-cell">{r.error}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="empty-state">
+                {running ? "Results appear here as each proxy finishes." : job ? "No proxies were tested." : "Paste your proxies, then click Start check."}
+              </div>
+            )}
+          </section>
+        </main>
+        <footer className="footer-note">Tests run from the computer running app.py. Only session IDs are shown here; full lines (with passwords) are only in what you copy or download.</footer>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+})();
+</script>

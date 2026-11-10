@@ -51,7 +51,7 @@
   .scroll-box::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 8px; border: 3px solid var(--surface); }
   .scroll-box::-webkit-scrollbar-thumb:hover { background-color: var(--ink-muted); }
 
-  .page-nav { display: flex; gap: 8px; }
+  .page-nav { display: flex; gap: 8px; flex-wrap: wrap; }
   .page-nav-link {
     font-family: var(--font-body); font-weight: 600; font-size: 13px;
     padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border);
@@ -374,6 +374,8 @@
           <a className="page-nav-link" href="/discord.html">Jigging Analysis</a>
           <a className="page-nav-link" href="/profile-finder.html">Profile Finder</a>
           <a className="page-nav-link page-nav-active" href="/account-finder.html">Account Finder</a>
+          <a className="page-nav-link" href="/proxy-tester.html">Proxy Tester</a>
+          <a className="page-nav-link" href="/speed-checker.html">Speed Check</a>
         </nav>
         <header className="topbar">
           <div className="brand">
